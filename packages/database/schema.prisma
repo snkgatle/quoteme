@@ -20,6 +20,10 @@ model ServiceProvider {
   name        String
   bio         String?  @db.Text
   email       String   @unique
+  latitude    Float?
+  longitude   Float?
+  trades      String[] @default([])
+  status      String   @default("ACTIVE")
   quotes      Quote[]
   createdAt   DateTime @default(now())
 }
@@ -29,6 +33,8 @@ model QuoteRequest {
   userId      String
   user        User     @relation(fields: [userId], references: [id])
   description String   @db.Text
+  latitude    Float?
+  longitude   Float?
   status      String   @default("PENDING")
   quotes      Quote[]
   createdAt   DateTime @default(now())

@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { prisma } from '@quoteme/database';
+import projectSubmissionRouter from './routes/projectSubmission';
 
 dotenv.config();
 
@@ -10,6 +10,8 @@ const port = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+
+app.use('/api/submit-project', projectSubmissionRouter);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', database: 'connected' });
