@@ -2,17 +2,19 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import projectSubmissionRouter from './routes/projectSubmission';
+import projectRouter from './routes/projectRoutes';
 import { generateBio } from './lib/gemini';
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3300;
 
 app.use(cors());
 app.use(express.json());
 
 app.use('/api/submit-project', projectSubmissionRouter);
+app.use('/api/projects', projectRouter);
 
 app.post('/api/sp/generate-bio', async (req: Request, res: Response) => {
     const { notes } = req.body;
