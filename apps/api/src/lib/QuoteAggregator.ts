@@ -21,18 +21,18 @@ export async function aggregateQuotesForProject(projectId: string) {
     // 2. Check if all required trades have at least one quote
     // Note: In this logic, we assume that 'RequiredServices' means 
     // having at least one quote for each trade in requiredTrades.
-    const providedTrades = project.quotes.map(q => q.trade).filter(Boolean) as string[];
-    const isComplete = project.requiredTrades.every(trade => providedTrades.includes(trade));
+    const providedTrades = project.quotes.map((q: any) => q.trade).filter(Boolean) as string[];
+    const isComplete = project.requiredTrades.every((trade: string) => providedTrades.includes(trade));
 
     if (!isComplete) {
         return {
             status: 'INCOMPLETE',
-            missingTrades: project.requiredTrades.filter(trade => !providedTrades.includes(trade))
+            missingTrades: project.requiredTrades.filter((trade: string) => !providedTrades.includes(trade))
         };
     }
 
     // 3. Aggregate total cost
-    const totalCost = project.quotes.reduce((sum, q) => sum + q.amount, 0);
+    const totalCost = project.quotes.reduce((sum: number, q: any) => sum + q.amount, 0);
 
     // 4. Generate professional summary via Gemini
     const summary = await generateCombinedSummary(project.description, project.quotes);
@@ -46,7 +46,7 @@ export async function aggregateQuotesForProject(projectId: string) {
         }
     });
 
-    const spProfileLinks = project.quotes.map(q => ({
+    const spProfileLinks = project.quotes.map((q: any) => ({
         name: q.serviceProvider.name,
         link: `/profile/${q.serviceProvider.id}`,
         trade: q.trade

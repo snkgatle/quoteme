@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { prisma } from '@quoteme/database';
 import { extractTrades } from '../lib/gemini';
 import { notifyServiceProviders } from '../lib/notifications';
@@ -22,7 +22,7 @@ function deg2rad(deg: number): number {
     return deg * (Math.PI / 180);
 }
 
-router.post('/', async (req, res) => {
+router.post('/', async (req: Request, res: Response) => {
     try {
         const { userEmail, userName, latitude, longitude, description } = req.body;
 
@@ -61,20 +61,20 @@ router.post('/', async (req, res) => {
             },
         });
 
-        const nearbySPs = allActiveSPs.filter(sp => {
+        const nearbySPs = allActiveSPs.filter((sp: any) => {
             if (!sp.latitude || !sp.longitude) return false;
 
             const distance = calculateDistance(latitude, longitude, sp.latitude, sp.longitude);
             const isNearby = distance <= 50; // 50km radius
 
             // Filter by trade match (at least one matching trade)
-            const hasMatchingTrade = sp.trades.some(trade => requiredTrades.includes(trade));
+            const hasMatchingTrade = sp.trades.some((trade: string) => requiredTrades.includes(trade));
 
             return isNearby && hasMatchingTrade;
         });
 
         // 4. Trigger asynchronous notifications
-        const spIds = nearbySPs.map(sp => sp.id);
+        const spIds = nearbySPs.map((sp: any) => sp.id);
         notifyServiceProviders(spIds, project.id);
 
         res.status(201).json({

@@ -18,6 +18,9 @@ graph TD
     
     API -->|Notify Potential SPs| SPPortal[Service Provider Admin Portal]
     
+    SPPortal -->|Onboard & Enhance Bio| Gemini
+    SPPortal -->|Capture Lat/Lng| GMap[Google Maps API]
+    
     SPPortal -->|View Deconstructed Project| DB
     SPPortal -->|Submit Quote & Proposal| API
     API -->|Save Quote| DB
