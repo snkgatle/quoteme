@@ -55,7 +55,7 @@ async function runAuditSimulation() {
         console.log('--- [STEP 3] Verifying Rating Trigger Logic ---');
         // sp2 is already 2.8, let's see if it's deactivated
         const updatedSP2 = await updateServiceProviderRating(sp2.id, 2.8);
-        console.log(`SP2 Status: ${updatedSP2.status} (Rating: ${updatedSP2.rating})`);
+        console.log(`SP2 Status: ${(updatedSP2 as any).status} (Rating: ${(updatedSP2 as any).rating})`);
 
         if (updatedSP2.status === 'DEACTIVATED') {
             console.log('✅ Rating Auto-Deactivation verified: SP with < 3.0 rating is DEACTIVATED.');

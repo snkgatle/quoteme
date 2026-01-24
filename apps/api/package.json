@@ -5,6 +5,7 @@
     "main": "src/index.ts",
     "scripts": {
         "dev": "ts-node-dev --respawn --project tsconfig.json src/index.ts",
+        "verify": "ts-node --project tsconfig.json src/lib/VerifySystem.ts",
         "build": "tsc",
         "start": "node dist/index.js"
     },
