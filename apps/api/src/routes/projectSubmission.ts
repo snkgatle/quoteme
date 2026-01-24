@@ -46,6 +46,7 @@ router.post('/', async (req, res) => {
                 description,
                 latitude,
                 longitude,
+                requiredTrades,
             },
         });
 

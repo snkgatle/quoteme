@@ -29,24 +29,27 @@ model ServiceProvider {
 }
 
 model QuoteRequest {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  description String   @db.Text
-  latitude    Float?
-  longitude   Float?
-  status      String   @default("PENDING")
-  quotes      Quote[]
-  createdAt   DateTime @default(now())
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  description     String   @db.Text
+  latitude        Float?
+  longitude       Float?
+  requiredTrades  String[] @default([])
+  isCombinedSent  Boolean  @default(false)
+  status          String   @default("PENDING")
+  quotes          Quote[]
+  createdAt       DateTime @default(now())
 }
 
 model Quote {
-  id               String         @id @default(cuid())
-  requestId        String
-  request          QuoteRequest   @relation(fields: [requestId], references: [id])
+  id                String         @id @default(cuid())
+  requestId         String
+  request           QuoteRequest   @relation(fields: [requestId], references: [id])
   serviceProviderId String
-  serviceProvider  ServiceProvider @relation(fields: [serviceProviderId], references: [id])
-  amount           Float
-  proposal         String         @db.Text
-  createdAt        DateTime       @default(now())
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  amount            Float
+  trade             String?
+  proposal          String         @db.Text
+  createdAt         DateTime       @default(now())
 }
