@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  requests  QuoteRequest[]
+  createdAt DateTime @default(now())
+}
+
+model ServiceProvider {
+  id          String   @id @default(cuid())
+  name        String
+  bio         String?  @db.Text
+  email       String   @unique
+  quotes      Quote[]
+  createdAt   DateTime @default(now())
+}
+
+model QuoteRequest {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  description String   @db.Text
+  status      String   @default("PENDING")
+  quotes      Quote[]
+  createdAt   DateTime @default(now())
+}
+
+model Quote {
+  id               String         @id @default(cuid())
+  requestId        String
+  request          QuoteRequest   @relation(fields: [requestId], references: [id])
+  serviceProviderId String
+  serviceProvider  ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  amount           Float
+  proposal         String         @db.Text
+  createdAt        DateTime       @default(now())
+}
