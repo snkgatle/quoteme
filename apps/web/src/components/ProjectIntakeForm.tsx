@@ -23,7 +23,7 @@ const ProjectIntakeForm: React.FC = () => {
 
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
-        googleMapsApiKey: "YOUR_GOOGLE_MAPS_API_KEY", // Replace with actual key
+        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
         libraries
     });
 
@@ -84,27 +84,27 @@ const ProjectIntakeForm: React.FC = () => {
     if (submittedId) {
         return (
             <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="max-w-xl mx-auto bg-white p-10 rounded-3xl shadow-xl border border-green-100 text-center"
+                className="max-w-xl mx-auto bg-white p-12 rounded-[40px] shadow-2xl border border-primary-50 text-center"
             >
-                <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 text-white">
-                    <CheckCircle className="w-10 h-10" />
+                <div className="w-24 h-24 bg-primary-500 rounded-full flex items-center justify-center mx-auto mb-8 text-white shadow-lg shadow-primary-200">
+                    <CheckCircle className="w-12 h-12" />
                 </div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Project Submitted!</h2>
-                <p className="text-gray-600 mb-8 leading-relaxed">
+                <h2 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">Project Submitted!</h2>
+                <p className="text-lg text-gray-500 mb-10 leading-relaxed font-medium">
                     Our AI is currently deconstructing your project into specific trades.
                     Local experts will be notified shortly.
                 </p>
-                <div className="bg-gray-50 rounded-xl p-4 mb-8">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Project ID</p>
-                    <p className="text-lg font-mono text-primary-700 font-bold">{submittedId}</p>
+                <div className="bg-gray-50 rounded-2xl p-6 mb-10 border border-gray-100">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Project Tracking ID</p>
+                    <p className="text-2xl font-black text-primary-600 tracking-tighter">{submittedId}</p>
                 </div>
                 <button
                     onClick={() => window.location.href = '/'}
-                    className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-colors"
+                    className="w-full bg-gray-900 text-white py-5 rounded-2xl font-bold hover:bg-black transition-all hover:scale-[1.02] active:scale-95 shadow-xl"
                 >
-                    Back to Home
+                    Return to Home
                 </button>
             </motion.div>
         );
@@ -125,33 +125,34 @@ const ProjectIntakeForm: React.FC = () => {
 
                 <motion.div
                     key={step}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="bg-white p-10 rounded-[40px] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] border border-gray-50"
                 >
                     {step === 1 && (
-                        <div className="space-y-6">
+                        <div className="space-y-8">
                             <div>
-                                <h3 className="text-2xl font-bold text-gray-900 mb-2">Tell us about your project</h3>
-                                <p className="text-gray-500 text-sm">Be as descriptive as possible. Our AI will handle the rest.</p>
+                                <h3 className="text-3xl font-black text-gray-900 mb-3 tracking-tight">What do you need?</h3>
+                                <p className="text-gray-500 font-medium">Describe your vision in plain English. Our AI will handle the technical details.</p>
                             </div>
-                            <div className="relative group">
+                            <div className="relative">
                                 <textarea
-                                    className="w-full px-5 py-4 border border-gray-200 rounded-2xl h-48 focus:ring-4 focus:ring-primary-100 focus:border-primary-500 outline-none transition-all resize-none text-gray-700 bg-white/50 backdrop-blur-sm relative z-10"
-                                    placeholder="Example: I need to install a new kitchen island, rewire the lighting, and fix a leaky faucet in the bathroom..."
+                                    className="w-full px-6 py-6 border-2 border-gray-100 rounded-3xl h-56 focus:ring-8 focus:ring-primary-50 focus:border-primary-500 outline-none transition-all resize-none text-gray-700 font-medium text-lg bg-gray-50/50"
+                                    placeholder="I'm planning a kitchen renovation involving new cabinets, electrical rewiring for an island, and plumbing for a second sink..."
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 />
-                                <div className="absolute top-4 right-4 text-primary-200 group-focus-within:text-primary-500 transition-colors z-0">
-                                    <Sparkles className="w-8 h-8 opacity-20" />
+                                <div className="absolute top-6 right-6 text-primary-200">
+                                    <Sparkles className="w-8 h-8 opacity-40 animate-pulse" />
                                 </div>
                             </div>
                             <button
                                 disabled={!formData.description}
                                 onClick={nextStep}
-                                className="w-full bg-primary-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-700 disabled:opacity-50 transition-all shadow-lg shadow-primary-200"
+                                className="w-full bg-primary-600 text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:bg-primary-500 disabled:opacity-30 transition-all shadow-xl shadow-primary-200 hover:-translate-y-1 active:translate-y-0"
                             >
-                                Next Step <ChevronRight className="w-5 h-5" />
+                                Continue <ChevronRight className="w-6 h-6" />
                             </button>
                         </div>
                     )}

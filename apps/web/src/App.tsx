@@ -4,6 +4,7 @@ import SPAdminDashboard from './components/SPAdminDashboard'
 import ProjectIntakeForm from './components/ProjectIntakeForm'
 import Header from './components/Header'
 import Home from './pages/Home'
+import Footer from './components/Footer'
 
 function App() {
     return (
@@ -18,6 +19,7 @@ function App() {
                         <Route path="/admin" element={<SPAdminDashboard />} />
                     </Routes>
                 </main>
+                <Footer />
             </div>
         </BrowserRouter>
     )

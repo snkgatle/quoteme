@@ -1,0 +1,12 @@
+
+> quoteme-web@1.0.0 build
+> tsc && vite build
+
+src/main.tsx(3,17): error TS5097: An import path can only end with a '.tsx' extension when 'allowImportingTsExtensions' is enabled.
+npm error Lifecycle script `build` failed with error:
+npm error code 2
+npm error path E:\Projects\QuoteMe\apps\web
+npm error workspace quoteme-web@1.0.0
+npm error location E:\Projects\QuoteMe\apps\web
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c tsc && vite build

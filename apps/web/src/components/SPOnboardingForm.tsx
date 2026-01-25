@@ -22,7 +22,7 @@ const SPOnboardingForm: React.FC = () => {
 
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
-        googleMapsApiKey: "YOUR_GOOGLE_MAPS_API_KEY", // Note to user: Replace with actual key
+        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
         libraries
     });
 
@@ -121,8 +121,8 @@ const SPOnboardingForm: React.FC = () => {
                                     setFormData({ ...formData, services: current });
                                 }}
                                 className={`px-3 py-1 rounded-full text-sm border transition-colors ${formData.services.includes(service)
-                                        ? 'bg-primary-500 text-white border-primary-500'
-                                        : 'bg-white text-gray-600 border-gray-200 hover:border-primary-500'
+                                    ? 'bg-primary-500 text-white border-primary-500'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-primary-500'
                                     }`}
                             >
                                 {service}

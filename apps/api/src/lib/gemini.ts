@@ -37,7 +37,7 @@ export async function extractTrades(description: string): Promise<string[]> {
 }
 
 export async function generateCombinedSummary(projectDescription: string, quotes: any[]) {
-    const quotesInfo = quotes.map(q => `${q.trade}: $${q.amount} by ${q.serviceProvider.name} (${q.proposal})`).join('\n');
+    const quotesInfo = quotes.map(q => `${q.trade}: R${q.amount} by ${q.serviceProvider.name} (${q.proposal})`).join('\n');
     const prompt = `Write a polite, professional summary of the work being performed by all parties for this project. 
   
   Project Description: ${projectDescription}

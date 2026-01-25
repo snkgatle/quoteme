@@ -5,7 +5,8 @@ import projectSubmissionRouter from './routes/projectSubmission';
 import projectRouter from './routes/projectRoutes';
 import { generateBio } from './lib/gemini';
 
-dotenv.config();
+import path from 'path';
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const app = express();
 const port = process.env.PORT || 3300;
