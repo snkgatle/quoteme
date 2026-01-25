@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { motion } from 'framer-motion';
 import { Upload, Sparkles, MapPin } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const libraries: ("places")[] = ["places"];
 
@@ -19,6 +21,8 @@ const SPOnboardingForm: React.FC = () => {
 
     const [isEnhancing, setIsEnhancing] = useState(false);
     const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+    const { token } = useAuth();
+    const navigate = useNavigate();
 
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
@@ -62,6 +66,33 @@ const SPOnboardingForm: React.FC = () => {
             // Stub: If a file is uploaded, we mark as qualified for now.
             setFormData(prev => ({ ...prev, isQualified: true }));
             alert(`Certification "${file.name}" uploaded. Business marked as Qualified.`);
+        }
+    };
+
+    const handleSubmit = async () => {
+        if (!token) {
+            alert("You must be logged in to submit.");
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/sp/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update profile');
+            }
+
+            navigate('/dashboard');
+        } catch (error) {
+            console.error(error);
+            alert('Failed to submit profile');
         }
     };
 
@@ -187,7 +218,9 @@ const SPOnboardingForm: React.FC = () => {
                     )}
                 </div>
 
-                <button className="w-full bg-primary-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-primary-700 transition-all hover:-translate-y-0.5">
+                <button
+                    onClick={handleSubmit}
+                    className="w-full bg-primary-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-primary-700 transition-all hover:-translate-y-0.5">
                     Complete Registration
                 </button>
             </div>

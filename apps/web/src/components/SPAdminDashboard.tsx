@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Briefcase, FileText, Settings, User, MapPin, EyeOff, Send } from 'lucide-react';
+import { LayoutDashboard, Briefcase, FileText, Settings, User, MapPin, EyeOff, Send, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const SPAdminDashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState('requests');
+    const { user, logout } = useAuth();
 
     // Mock data for masked requests
     const maskedRequests = [
@@ -58,15 +60,22 @@ const SPAdminDashboard: React.FC = () => {
                 </nav>
 
                 <div className="mt-auto pt-6 border-t border-gray-100">
-                    <div className="flex items-center gap-3 px-2">
+                    <div className="flex items-center gap-3 px-2 mb-2">
                         <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-xs">
-                            SP
+                            {user?.name ? user.name.charAt(0).toUpperCase() : 'SP'}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">Super Plumber Ltd</p>
-                            <p className="text-xs text-gray-500 truncate">sp@example.com</p>
+                            <p className="text-sm font-semibold text-gray-900 truncate">{user?.name || 'Service Provider'}</p>
+                            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                         </div>
                     </div>
+                    <button
+                        onClick={logout}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                    </button>
                 </div>
             </aside>
 

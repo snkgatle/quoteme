@@ -24,7 +24,7 @@ function deg2rad(deg: number): number {
 
 router.post('/', async (req: Request, res: Response) => {
     try {
-        const { userEmail, userName, latitude, longitude, description } = req.body;
+        const { userEmail, userName, userPhone, latitude, longitude, description } = req.body;
 
         if (!latitude || !longitude || !description) {
             return res.status(400).json({ error: 'Latitude, longitude, and description are required.' });
@@ -36,8 +36,8 @@ router.post('/', async (req: Request, res: Response) => {
         // 2. Upsert user and create project request
         const user = await prisma.user.upsert({
             where: { email: userEmail },
-            update: { name: userName },
-            create: { email: userEmail, name: userName },
+            update: { name: userName, phone: userPhone },
+            create: { email: userEmail, name: userName, phone: userPhone },
         });
 
         const project = await prisma.quoteRequest.create({
