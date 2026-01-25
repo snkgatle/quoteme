@@ -26,7 +26,11 @@ function App() {
                                     <SPAdminDashboard />
                                 </ProtectedRoute>
                             } />
-                            <Route path="/admin" element={<SPAdminDashboard />} />
+                            <Route path="/admin" element={
+                                <ProtectedRoute>
+                                    <SPAdminDashboard />
+                                </ProtectedRoute>
+                            } />
                         </Routes>
                     </main>
                     <Footer />
