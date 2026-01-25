@@ -21,8 +21,12 @@ const SPOnboardingForm: React.FC = () => {
 
     const [isEnhancing, setIsEnhancing] = useState(false);
     const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-    const { token } = useAuth();
+    const { token, login } = useAuth();
     const navigate = useNavigate();
+
+    // Fields for unauthenticated registration
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
@@ -70,9 +74,34 @@ const SPOnboardingForm: React.FC = () => {
     };
 
     const handleSubmit = async () => {
-        if (!token) {
-            alert("You must be logged in to submit.");
-            return;
+        let currentToken = token;
+
+        // If not logged in, register first
+        if (!currentToken) {
+            if (!email || !password) {
+                alert("Please provide an email and password to create your account.");
+                return;
+            }
+
+            try {
+                const authResponse = await fetch('/api/auth/sp/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const authData = await authResponse.json();
+                if (!authResponse.ok) {
+                    throw new Error(authData.error || 'Registration failed');
+                }
+
+                currentToken = authData.token;
+                login(authData.token, authData.user);
+            } catch (error: any) {
+                console.error(error);
+                alert(`Registration failed: ${error.message}`);
+                return;
+            }
         }
 
         try {
@@ -80,7 +109,7 @@ const SPOnboardingForm: React.FC = () => {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${currentToken}`
                 },
                 body: JSON.stringify(formData),
             });
@@ -107,6 +136,32 @@ const SPOnboardingForm: React.FC = () => {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Service Provider Onboarding</h2>
 
             <div className="space-y-6">
+
+                {/* Registration Info (if not logged in) */}
+                {!token && (
+                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-4">
+                        <h3 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Account Details</h3>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                            <input
+                                type="email"
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Create Password</label>
+                            <input
+                                type="password"
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                )}
+
                 {/* Business Info */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Business Name</label>

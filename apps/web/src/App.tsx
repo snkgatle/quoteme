@@ -20,11 +20,7 @@ function App() {
                             <Route path="/" element={<Home />} />
                             <Route path="/request-quote" element={<div className="py-20 bg-gray-50"><ProjectIntakeForm /></div>} />
                             <Route path="/sp-login" element={<SPLogin />} />
-                            <Route path="/onboard" element={
-                                <ProtectedRoute>
-                                    <div className="py-20 bg-gray-50"><SPOnboardingForm /></div>
-                                </ProtectedRoute>
-                            } />
+                            <Route path="/onboard" element={<div className="py-20 bg-gray-50"><SPOnboardingForm /></div>} />
                             <Route path="/dashboard" element={
                                 <ProtectedRoute>
                                     <SPAdminDashboard />
