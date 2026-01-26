@@ -13,7 +13,15 @@ export const TRADES = [
   'Handyman',
   'Mechanic',
   'Cleaner',
-  'Mover'
+  'Mover',
+  'Baker',
+  'Nanny',
+  'Chef',
+  'Tutor',
+  'Driver',
+  'Pet Sitter',
+  'Event Planner',
+  'Photographer'
 ] as const;
 
 export type Trade = typeof TRADES[number];
