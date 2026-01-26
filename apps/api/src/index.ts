@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import projectSubmissionRouter from './routes/projectSubmission';
 import projectRouter from './routes/projectRoutes';
+import authRouter from './routes/auth.routes';
+import spRouter from './routes/sp.routes';
 import { generateBio } from './lib/gemini';
 
 import path from 'path';
@@ -16,6 +18,8 @@ app.use(express.json());
 
 app.use('/api/submit-project', projectSubmissionRouter);
 app.use('/api/projects', projectRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/sp', spRouter);
 
 app.post('/api/sp/generate-bio', async (req: Request, res: Response) => {
     const { notes } = req.body;

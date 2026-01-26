@@ -27,6 +27,7 @@ router.get('/:id', async (req: Request, res: Response) => {
                 user: {
                     name: user.name,
                     email: user.email,
+                    phone: user.phone,
                 }
             });
         }
@@ -37,6 +38,7 @@ router.get('/:id', async (req: Request, res: Response) => {
             user: {
                 name: "Anonymous User",
                 email: "masked@quoteme.internal",
+                phone: "masked",
             }
         });
 

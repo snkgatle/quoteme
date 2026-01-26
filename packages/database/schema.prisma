@@ -11,15 +11,17 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
+  phone     String?
   requests  QuoteRequest[]
   createdAt DateTime @default(now())
 }
 
 model ServiceProvider {
   id          String   @id @default(cuid())
-  name        String
+  name        String?
   bio         String?  @db.Text
   email       String   @unique
+  password    String
   latitude    Float?
   longitude   Float?
   trades      String[] @default([])
