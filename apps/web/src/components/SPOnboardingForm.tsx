@@ -262,15 +262,15 @@ const SPOnboardingForm: React.FC = () => {
                         <div className="mt-4 p-4 bg-white rounded-lg border border-primary-200 shadow-sm">
                             <div className="flex justify-between items-center mb-2">
                                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Review & Edit Bio</h4>
-                                <span className={`text-xs ${formData.bio.length > 400 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
-                                    {formData.bio.length}/400
+                                <span className={`text-xs ${formData.bio.length > 300 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
+                                    {formData.bio.length}/300
                                 </span>
                             </div>
                             <textarea
                                 className="w-full px-4 py-2 border border-gray-200 rounded-lg h-32 focus:ring-2 focus:ring-primary-500 outline-none text-sm leading-relaxed"
                                 value={formData.bio}
                                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                                maxLength={400}
+                                maxLength={300}
                             />
                         </div>
                     )}
