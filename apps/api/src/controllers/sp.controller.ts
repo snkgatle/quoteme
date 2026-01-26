@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { prisma } from '@quoteme/database';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { calculateDistance } from '../lib/geo';
+import { uploadFile } from '../lib/storage';
 
 export const getAvailableProjects = async (req: Request, res: Response) => {
     const user = (req as AuthRequest).user;
@@ -105,16 +106,55 @@ export const updateProfile = async (req: Request, res: Response) => {
   } = req.body;
 
   try {
-    const updatedSP = await prisma.serviceProvider.update({
+    let parsedServices = services;
+    if (typeof services === 'string') {
+        try {
+            parsedServices = JSON.parse(services);
+        } catch (e) {
+            parsedServices = [services];
+        }
+    }
+    // Ensure parsedServices is array
+    if (!Array.isArray(parsedServices)) {
+        parsedServices = [];
+    }
+
+    const lat = latitude ? parseFloat(latitude) : undefined;
+    const lon = longitude ? parseFloat(longitude) : undefined;
+
+    const currentSP = await prisma.serviceProvider.findUnique({
       where: { id: user.id },
-      data: {
+    });
+
+    let certificationUrl = undefined;
+    let newStatus = currentSP?.status || 'ACTIVE';
+
+    if (req.file) {
+      certificationUrl = await uploadFile(req.file);
+      newStatus = 'PENDING_VERIFICATION';
+    } else {
+        // If finishing onboarding (was ONBOARDING) and no file uploaded -> ACTIVE
+        if (currentSP?.status === 'ONBOARDING') {
+            newStatus = 'ACTIVE';
+        }
+    }
+
+    const updateData: any = {
         name: businessName,
         bio,
-        latitude,
-        longitude,
-        trades: services,
-        status: 'ACTIVE',
-      },
+        latitude: lat,
+        longitude: lon,
+        trades: parsedServices,
+        status: newStatus,
+    };
+
+    if (certificationUrl) {
+        updateData.certification_url = certificationUrl;
+    }
+
+    const updatedSP = await prisma.serviceProvider.update({
+      where: { id: user.id },
+      data: updateData,
     });
 
     const { password: _, ...userInfo } = updatedSP;

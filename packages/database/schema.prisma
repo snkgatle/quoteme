@@ -26,6 +26,7 @@ model ServiceProvider {
   longitude   Float
   trades      String[] @default([])
   status      String   @default("ACTIVE")
+  certification_url String?
   rating      Float    @default(5.0)
   quotes      Quote[]
   createdAt   DateTime @default(now())

@@ -19,6 +19,7 @@ const SPOnboardingForm: React.FC = () => {
         isQualified: false,
     });
 
+    const [file, setFile] = useState<File | null>(null);
     const [addressInput, setAddressInput] = useState('');
     const [isEnhancing, setIsEnhancing] = useState(false);
     const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -70,12 +71,10 @@ const SPOnboardingForm: React.FC = () => {
     };
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            // Logic for 'Qualified' vs 'Unqualified'
-            // Stub: If a file is uploaded, we mark as qualified for now.
+        const selectedFile = e.target.files?.[0];
+        if (selectedFile) {
+            setFile(selectedFile);
             setFormData(prev => ({ ...prev, isQualified: true }));
-            alert(`Certification "${file.name}" uploaded. Business marked as Qualified.`);
         }
     };
 
@@ -121,13 +120,24 @@ const SPOnboardingForm: React.FC = () => {
         }
 
         try {
+            const data = new FormData();
+            data.append('businessName', formData.businessName);
+            // Use bio if edited, otherwise fallback to notes or empty string
+            data.append('bio', formData.bio || formData.notes || '');
+            if (formData.latitude) data.append('latitude', String(formData.latitude));
+            if (formData.longitude) data.append('longitude', String(formData.longitude));
+            data.append('services', JSON.stringify(formData.services));
+
+            if (file) {
+                data.append('certification', file);
+            }
+
             const response = await fetch('/api/sp/profile', {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${currentToken}`
                 },
-                body: JSON.stringify(formData),
+                body: data,
             });
 
             if (!response.ok) {
