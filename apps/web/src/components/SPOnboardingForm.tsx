@@ -19,6 +19,7 @@ const SPOnboardingForm: React.FC = () => {
         isQualified: false,
     });
 
+    const [addressInput, setAddressInput] = useState('');
     const [isEnhancing, setIsEnhancing] = useState(false);
     const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
     const { token, login } = useAuth();
@@ -41,6 +42,11 @@ const SPOnboardingForm: React.FC = () => {
             const lng = place.geometry?.location?.lng();
             if (lat && lng) {
                 setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
+                if (place.formatted_address) {
+                    setAddressInput(place.formatted_address);
+                }
+            } else {
+                setFormData(prev => ({ ...prev, latitude: null, longitude: null }));
             }
         }
     };
@@ -74,6 +80,11 @@ const SPOnboardingForm: React.FC = () => {
     };
 
     const handleSubmit = async () => {
+        if (formData.latitude === null || formData.longitude === null) {
+            alert("Please select a valid address from the Google Maps suggestions.");
+            return;
+        }
+
         let currentToken = token;
 
         // If not logged in, register first
@@ -87,7 +98,12 @@ const SPOnboardingForm: React.FC = () => {
                 const authResponse = await fetch('/api/auth/sp/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password }),
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        latitude: formData.latitude,
+                        longitude: formData.longitude
+                    }),
                 });
 
                 const authData = await authResponse.json();
@@ -188,6 +204,11 @@ const SPOnboardingForm: React.FC = () => {
                                 type="text"
                                 placeholder="Search business address..."
                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                value={addressInput}
+                                onChange={(e) => {
+                                    setAddressInput(e.target.value);
+                                    setFormData(prev => ({ ...prev, latitude: null, longitude: null }));
+                                }}
                             />
                         </Autocomplete>
                     )}

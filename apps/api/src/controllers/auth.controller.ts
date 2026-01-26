@@ -4,7 +4,7 @@ import { hashPassword, comparePassword, signToken } from '../lib/auth';
 import { AuthRequest } from '../middleware/auth.middleware';
 
 export const loginOrRegister = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email, password, latitude, longitude } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
@@ -27,12 +27,18 @@ export const loginOrRegister = async (req: Request, res: Response) => {
       return res.json({ token, isNew: false, user: userWithoutPassword });
     } else {
       // Register (Onboarding)
+      if (latitude === undefined || longitude === undefined || latitude === null || longitude === null) {
+        return res.status(400).json({ error: 'Location required for registration' });
+      }
+
       const hashedPassword = await hashPassword(password);
       sp = await prisma.serviceProvider.create({
         data: {
           email,
           password: hashedPassword,
           status: 'ONBOARDING',
+          latitude: Number(latitude),
+          longitude: Number(longitude),
         },
       });
 
