@@ -22,13 +22,15 @@ model ServiceProvider {
   bio         String?  @db.Text
   email       String   @unique
   password    String
-  latitude    Float?
-  longitude   Float?
+  latitude    Float
+  longitude   Float
   trades      String[] @default([])
   status      String   @default("ACTIVE")
   rating      Float    @default(5.0)
   quotes      Quote[]
   createdAt   DateTime @default(now())
+
+  @@index([latitude, longitude])
 }
 
 model QuoteRequest {
