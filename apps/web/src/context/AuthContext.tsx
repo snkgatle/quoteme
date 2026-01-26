@@ -24,7 +24,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     useEffect(() => {
         if (token) {
-            fetch('/api/sp/me', {
+            fetch('/api/auth/sp/me', {
                 headers: { Authorization: `Bearer ${token}` }
             })
             .then(res => {
