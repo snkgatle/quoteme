@@ -2,6 +2,20 @@ import { Request, Response } from 'express';
 import { prisma } from '@quoteme/database';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { calculateDistance } from '../lib/geo';
+import { generateBio as generateBioFromAI } from '../lib/gemini';
+
+export const generateBioContent = async (req: Request, res: Response) => {
+    const { notes } = req.body;
+    if (!notes) return res.status(400).json({ error: 'Notes are required' });
+
+    try {
+        const bio = await generateBioFromAI({ notes });
+        res.json({ bio });
+    } catch (error) {
+        console.error('Bio generation error:', error);
+        res.status(500).json({ error: 'Failed to generate bio' });
+    }
+};
 
 export const getAvailableProjects = async (req: Request, res: Response) => {
     const user = (req as AuthRequest).user;

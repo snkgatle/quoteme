@@ -16,7 +16,7 @@ export async function deconstructProject(description: string) {
 }
 
 export async function generateBio(providerInfo: any) {
-    const prompt = `Generate a professional service provider bio based on this info: ${JSON.stringify(providerInfo)}`;
+    const prompt = `Generate a professional service provider bio based on this info: ${JSON.stringify(providerInfo)}. Structure the bio with the following sections: 'Years of Experience', 'Specialties', and 'Service Philosophy'. Keep the total response under 400 characters for mobile optimization.`;
     const result = await geminiModel.generateContent(prompt);
     const response = await result.response;
     return response.text();
