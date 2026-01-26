@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { motion } from 'framer-motion';
 import { Upload, Sparkles, MapPin } from 'lucide-react';
@@ -23,8 +23,21 @@ const SPOnboardingForm: React.FC = () => {
     const [addressInput, setAddressInput] = useState('');
     const [isEnhancing, setIsEnhancing] = useState(false);
     const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-    const { token, login } = useAuth();
+    const { token, login, user } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (user) {
+            setFormData(prev => ({
+                ...prev,
+                businessName: user.name || prev.businessName,
+                bio: user.bio || prev.bio,
+                latitude: user.latitude ?? prev.latitude,
+                longitude: user.longitude ?? prev.longitude,
+                services: user.trades || prev.services,
+            }));
+        }
+    }, [user]);
 
     // Fields for unauthenticated registration
     const [email, setEmail] = useState('');

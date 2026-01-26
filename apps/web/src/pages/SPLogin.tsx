@@ -34,7 +34,7 @@ const SPLogin: React.FC = () => {
 
             login(data.token, data.user);
 
-            if (data.isNew) {
+            if (data.isNew || data.user.status === 'ONBOARDING') {
                 navigate('/onboard');
             } else {
                 navigate(from);

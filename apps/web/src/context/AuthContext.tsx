@@ -1,10 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-interface User {
+export interface User {
     id: string;
     email: string;
     name?: string;
-    // Add other fields as needed
+    status?: string;
+    bio?: string;
+    trades?: string[];
+    latitude?: number;
+    longitude?: number;
 }
 
 interface AuthContextType {
