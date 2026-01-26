@@ -49,21 +49,27 @@ const SPLogin: React.FC = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl border border-gray-100"
             >
-                <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                <div className="flex flex-col items-center">
+                    <img
+                        src="/assets/final01.png"
+                        alt="QuoteMe Logo"
+                        className="h-12 w-auto mb-6"
+                    />
+                    <h2 className="text-center text-3xl font-extrabold text-gray-900">
                         Service Provider Login
                     </h2>
                     <p className="mt-2 text-center text-sm text-gray-600">
                         Or enter a new email to create an account
                     </p>
                 </div>
+
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                    <input type="hidden" name="remember" value="true" />
-                    <div className="rounded-md shadow-sm -space-y-px">
+                    <div className="space-y-4">
                         <div>
                             <label htmlFor="email-address" className="sr-only">Email address</label>
                             <input
@@ -72,7 +78,7 @@ const SPLogin: React.FC = () => {
                                 type="email"
                                 autoComplete="email"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                                className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                                 placeholder="Email address"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -86,7 +92,7 @@ const SPLogin: React.FC = () => {
                                 type="password"
                                 autoComplete="current-password"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                                className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                                 placeholder="Password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -95,7 +101,7 @@ const SPLogin: React.FC = () => {
                     </div>
 
                     {error && (
-                        <div className="text-red-500 text-sm text-center">
+                        <div className="text-red-500 text-sm text-center font-medium">
                             {error}
                         </div>
                     )}
@@ -104,7 +110,7 @@ const SPLogin: React.FC = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 transition-colors shadow-md active:shadow-sm"
                         >
                             {loading ? 'Processing...' : 'Sign in / Register'}
                         </button>
