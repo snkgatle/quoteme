@@ -260,8 +260,22 @@ const SPOnboardingForm: React.FC = () => {
 
                     {formData.bio && (
                         <div className="mt-4 p-4 bg-white rounded-lg border border-primary-200 shadow-sm">
-                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Generated Bio</h4>
-                            <p className="text-sm text-gray-700 leading-relaxed italic">"{formData.bio}"</p>
+                            <div className="flex justify-between items-center mb-2">
+                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Review & Edit Bio</h4>
+                                <span className={`text-xs ${formData.bio.length > 300 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
+                                    {formData.bio.length}/300
+                                </span>
+                            </div>
+                            <textarea
+                                className="w-full text-sm text-gray-700 leading-relaxed italic border-none bg-transparent focus:ring-0 resize-none h-32"
+                                value={formData.bio}
+                                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                            />
+                            {formData.bio.length > 300 && (
+                                <p className="text-xs text-red-500 mt-1">
+                                    Bio is too long for mobile view. Please edit to shorten it.
+                                </p>
+                            )}
                         </div>
                     )}
                 </div>
