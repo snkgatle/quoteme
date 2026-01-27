@@ -6,6 +6,7 @@ import projectRouter from './routes/projectRoutes';
 import authRouter from './routes/auth.routes';
 import spRouter from './routes/sp.routes';
 import notificationRouter from './routes/notifications.routes';
+import quoteRouter from './routes/quote.routes';
 
 import path from 'path';
 dotenv.config({ path: path.join(__dirname, '../../.env') });
@@ -21,6 +22,7 @@ app.use('/api/projects', projectRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/sp', spRouter);
 app.use('/api/sp/notifications', notificationRouter);
+app.use('/api/quotes', quoteRouter);
 
 app.get('/health', (req: Request, res: Response) => {
     res.json({ status: 'ok', database: 'connected' });
