@@ -4,6 +4,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import { calculateDistance } from '../lib/geo';
 import { generateBio as generateBioFromAI } from '../lib/gemini';
 import { uploadFile } from '../lib/storage';
+import { logger } from '../lib/logger';
 
 export const generateBioContent = async (req: Request, res: Response) => {
     const { notes } = req.body;
@@ -185,7 +186,10 @@ export const submitQuote = async (req: Request, res: Response) => {
 
     const { requestId, amount, proposal, trade } = req.body;
 
+    logger.info('Quote submission attempt', { serviceProviderId: user.id, requestId });
+
     if (!requestId || !amount || !proposal) {
+        logger.warn('Quote submission missing fields', { serviceProviderId: user.id, body: req.body });
         return res.status(400).json({ error: 'Request ID, amount, and proposal are required.' });
     }
 
@@ -201,15 +205,33 @@ export const submitQuote = async (req: Request, res: Response) => {
             }
         });
 
+        logger.info('Quote submitted successfully', { quoteId: quote.id });
         res.status(201).json({ message: 'Quote submitted successfully', quote });
     } catch (error: any) {
         if (error.code === 'P2002') { // Prisma unique constraint violation code
-             return res.status(409).json({ error: 'You have already submitted a quote for this request.' });
+            logger.warn('Duplicate quote submission attempt', { serviceProviderId: user.id, requestId });
+            return res.status(409).json({ error: 'You have already submitted a quote for this request.' });
         }
         if (error.code === 'P2003') { // Prisma foreign key constraint violation code
-             return res.status(404).json({ error: 'Project not found.' });
+            return res.status(404).json({ error: 'Project not found.' });
         }
-        console.error('Submit quote error:', error);
+        logger.error('Submit quote error', { error, serviceProviderId: user.id, requestId });
         res.status(500).json({ error: 'Failed to submit quote' });
+    }
+};
+
+export const deleteAccount = async (req: Request, res: Response) => {
+    const user = (req as AuthRequest).user;
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+        await prisma.serviceProvider.delete({
+            where: { id: user.id },
+        });
+
+        res.json({ message: 'Account deleted successfully' });
+    } catch (error) {
+        console.error('Delete account error:', error);
+        res.status(500).json({ error: 'Failed to delete account' });
     }
 };

@@ -54,7 +54,7 @@ model Quote {
   requestId         String
   request           QuoteRequest   @relation(fields: [requestId], references: [id])
   serviceProviderId String
-  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade)
   amount            Float
   trade             String?
   proposal          String         @db.Text
