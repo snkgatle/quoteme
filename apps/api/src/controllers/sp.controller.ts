@@ -121,22 +121,6 @@ export const updateProfile = async (req: Request, res: Response) => {
     } = req.body;
 
     try {
-        let parsedServices = services;
-        if (typeof services === 'string') {
-            try {
-                parsedServices = JSON.parse(services);
-            } catch (e) {
-                parsedServices = [services];
-            }
-        }
-        // Ensure parsedServices is array
-        if (!Array.isArray(parsedServices)) {
-            parsedServices = [];
-        }
-
-        const lat = latitude ? parseFloat(latitude) : undefined;
-        const lon = longitude ? parseFloat(longitude) : undefined;
-
         const currentSP = await prisma.serviceProvider.findUnique({
             where: { id: user.id },
         });
@@ -155,16 +139,29 @@ export const updateProfile = async (req: Request, res: Response) => {
         }
 
         const updateData: any = {
-            name: businessName,
-            bio,
-            latitude: lat,
-            longitude: lon,
-            trades: parsedServices,
             status: newStatus,
         };
 
-        if (certificationUrl) {
-            updateData.certification_url = certificationUrl;
+        if (businessName !== undefined) updateData.name = businessName;
+        if (bio !== undefined) updateData.bio = bio;
+        if (latitude !== undefined) updateData.latitude = parseFloat(latitude);
+        if (longitude !== undefined) updateData.longitude = parseFloat(longitude);
+        if (certificationUrl) updateData.certification_url = certificationUrl;
+
+        if (services !== undefined) {
+            let parsedServices = services;
+            if (typeof services === 'string') {
+                try {
+                    parsedServices = JSON.parse(services);
+                } catch (e) {
+                    parsedServices = [services];
+                }
+            }
+            // Ensure parsedServices is array
+            if (!Array.isArray(parsedServices)) {
+                parsedServices = [];
+            }
+            updateData.trades = parsedServices;
         }
 
         const updatedSP = await prisma.serviceProvider.update({
