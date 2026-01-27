@@ -157,7 +157,7 @@ const SPOnboardingForm: React.FC = () => {
                 throw new Error('Failed to update profile');
             }
 
-            navigate('/dashboard');
+            navigate('/admin');
         } catch (error) {
             console.error(error);
             alert('Failed to submit profile');
