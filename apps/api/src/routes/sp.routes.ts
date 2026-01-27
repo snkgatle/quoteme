@@ -17,7 +17,7 @@ const upload = multer({
 });
 
 router.post('/generate-bio', generateBioContent);
-router.put('/profile', authenticateSP, upload.single('certification'), updateProfile);
+router.patch('/profile', authenticateSP, upload.single('certification'), updateProfile);
 router.delete('/profile', authenticateSP, deleteAccount);
 router.get('/available-projects', authenticateSP, getAvailableProjects);
 router.post('/quotes', authenticateSP, submitQuote);

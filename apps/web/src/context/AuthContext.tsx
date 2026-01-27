@@ -9,6 +9,7 @@ export interface User {
     trades?: string[];
     latitude?: number;
     longitude?: number;
+    certification_url?: string;
 }
 
 interface AuthContextType {

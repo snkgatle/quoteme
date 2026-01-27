@@ -148,7 +148,7 @@ const SPOnboardingForm: React.FC = () => {
             }
 
             const response = await fetch('/api/sp/profile', {
-                method: 'PUT',
+                method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${currentToken}`
                 },
