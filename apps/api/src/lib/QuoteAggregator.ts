@@ -1,7 +1,10 @@
 import { prisma } from '@quoteme/database';
 import { generateCombinedSummary } from './gemini';
+import { logger } from './logger';
 
 export async function aggregateQuotesForProject(projectId: string) {
+    logger.info('Starting quote aggregation', { projectId });
+
     // 1. Fetch project with its quotes and service providers
     const project = await prisma.quoteRequest.findUnique({
         where: { id: projectId },
@@ -15,6 +18,7 @@ export async function aggregateQuotesForProject(projectId: string) {
     });
 
     if (!project) {
+        logger.warn('Quote aggregation project not found', { projectId });
         throw new Error('Project not found');
     }
 
@@ -31,11 +35,14 @@ export async function aggregateQuotesForProject(projectId: string) {
         const diffHours = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60);
 
         if (diffHours < 48) {
+            const missingTrades = project.requiredTrades.filter((trade: string) => !providedTrades.includes(trade));
+            logger.info('Quote aggregation incomplete (within TTL)', { projectId, missingTrades });
             return {
                 status: 'INCOMPLETE',
-                missingTrades: project.requiredTrades.filter((trade: string) => !providedTrades.includes(trade))
+                missingTrades
             };
         }
+        logger.info('Quote aggregation incomplete (TTL expired), proceeding with partial', { projectId });
         // If > 48h, proceed to generate Partial Combined Quote
     }
 
@@ -46,6 +53,7 @@ export async function aggregateQuotesForProject(projectId: string) {
     const inactiveProviders = selectedQuotes.filter((q: any) => q.serviceProvider.status !== 'ACTIVE');
     if (inactiveProviders.length > 0) {
         const names = inactiveProviders.map((q: any) => q.serviceProvider.name).join(', ');
+        logger.warn('Quote aggregation failed due to inactive providers', { projectId, inactiveProviders: names });
         throw new Error(`Cannot finalize quote: The following providers are no longer active: ${names}`);
     }
 
@@ -71,8 +79,11 @@ export async function aggregateQuotesForProject(projectId: string) {
         trade: q.trade
     }));
 
+    const status = isComplete ? 'COMPLETE' : 'PARTIAL_COMPLETE';
+    logger.debug('Quote aggregation calculation complete', { projectId, totalCost, status });
+
     return {
-        status: isComplete ? 'COMPLETE' : 'PARTIAL_COMPLETE',
+        status,
         projectId: project.id,
         totalCost,
         summary,
