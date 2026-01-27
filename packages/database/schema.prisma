@@ -32,6 +32,7 @@ model ServiceProvider {
   reviewCount Int      @default(0)
   quotes      Quote[]
   reviews     Review[]
+  notifications Notification[]
   createdAt   DateTime @default(now())
 
   @@index([latitude, longitude])
@@ -76,4 +77,17 @@ model Review {
   rating            Int
   comment           String?         @db.Text
   createdAt         DateTime        @default(now())
+}
+
+model Notification {
+  id                String          @id @default(cuid())
+  serviceProviderId String
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade)
+  type              String
+  message           String
+  projectId         String?
+  isRead            Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+
+  @@unique([serviceProviderId, type, projectId])
 }
