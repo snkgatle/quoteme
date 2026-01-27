@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { updateProfile, getAvailableProjects } from '../controllers/sp.controller';
+import { updateProfile, getAvailableProjects, generateBioContent } from '../controllers/sp.controller';
 import { authenticateSP } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -16,6 +16,7 @@ const upload = multer({
     }
 });
 
+router.post('/generate-bio', generateBioContent);
 router.put('/profile', authenticateSP, upload.single('certification'), updateProfile);
 router.get('/available-projects', authenticateSP, getAvailableProjects);
 

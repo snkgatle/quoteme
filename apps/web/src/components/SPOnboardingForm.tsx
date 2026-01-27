@@ -277,15 +277,11 @@ const SPOnboardingForm: React.FC = () => {
                                 </span>
                             </div>
                             <textarea
-                                className="w-full text-sm text-gray-700 leading-relaxed italic border-none bg-transparent focus:ring-0 resize-none h-32"
+                                className="w-full px-4 py-2 border border-gray-200 rounded-lg h-32 focus:ring-2 focus:ring-primary-500 outline-none text-sm leading-relaxed"
                                 value={formData.bio}
                                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                                maxLength={300}
                             />
-                            {formData.bio.length > 300 && (
-                                <p className="text-xs text-red-500 mt-1">
-                                    Bio is too long for mobile view. Please edit to shorten it.
-                                </p>
-                            )}
                         </div>
                     )}
                 </div>

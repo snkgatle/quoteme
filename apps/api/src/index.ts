@@ -5,7 +5,6 @@ import projectSubmissionRouter from './routes/projectSubmission';
 import projectRouter from './routes/projectRoutes';
 import authRouter from './routes/auth.routes';
 import spRouter from './routes/sp.routes';
-import { generateBio } from './lib/gemini';
 
 import path from 'path';
 dotenv.config({ path: path.join(__dirname, '../../.env') });
@@ -20,18 +19,6 @@ app.use('/api/submit-project', projectSubmissionRouter);
 app.use('/api/projects', projectRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/sp', spRouter);
-
-app.post('/api/sp/generate-bio', async (req: Request, res: Response) => {
-    const { notes } = req.body;
-    if (!notes) return res.status(400).json({ error: 'Notes are required' });
-
-    try {
-        const bio = await generateBio({ notes });
-        res.json({ bio });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to generate bio' });
-    }
-});
 
 app.get('/health', (req: Request, res: Response) => {
     res.json({ status: 'ok', database: 'connected' });
