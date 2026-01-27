@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, AlertCircle, DollarSign, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 interface Project {
     id: string;
@@ -30,6 +31,7 @@ type QuoteFormData = z.infer<typeof schema>;
 
 const QuoteForm: React.FC<QuoteFormProps> = ({ project, onClose, onSubmitSuccess }) => {
     const { token } = useAuth();
+    const { addToast } = useToast();
     const { register, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<QuoteFormData>({
         resolver: zodResolver(schema),
     });
@@ -55,12 +57,17 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ project, onClose, onSubmitSuccess
                 throw new Error(errorData.error || 'Failed to submit quote');
             }
 
+            addToast('success', 'Quote submitted successfully!');
             onSubmitSuccess();
         } catch (error: any) {
             console.error('Submission error:', error);
+
+            const errorMessage = error.message || 'An unexpected error occurred.';
+            addToast('error', errorMessage);
+
             setError('root', {
                 type: 'manual',
-                message: error.message || 'An unexpected error occurred.',
+                message: errorMessage,
             });
         }
     };
