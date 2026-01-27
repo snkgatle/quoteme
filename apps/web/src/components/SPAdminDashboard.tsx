@@ -1,7 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Briefcase, FileText, Settings, User, MapPin, EyeOff, Send, LogOut, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { LayoutDashboard, Briefcase, FileText, Settings, User, MapPin, EyeOff, Send, LogOut, CheckCircle, XCircle, Clock, Star, AlertTriangle, TrendingUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+interface Review {
+    id: string;
+    rating: number;
+    comment: string | null;
+    createdAt: string;
+}
+
+interface PerformanceData {
+    rating: number;
+    reviewCount: number;
+    projectWins: number;
+    reviews: Review[];
+}
 
 interface Project {
     id: string;
@@ -32,7 +46,19 @@ const SPAdminDashboard: React.FC = () => {
     const [newRequests, setNewRequests] = useState<Project[]>([]);
     const [sentQuotes, setSentQuotes] = useState<Quote[]>([]);
     const [acceptedJobs, setAcceptedJobs] = useState<Quote[]>([]);
+    const [performanceData, setPerformanceData] = useState<PerformanceData | null>(null);
     const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (activeTab === 'performance' && token) {
+            fetch('/api/sp/performance', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+                .then(res => res.json())
+                .then(data => setPerformanceData(data))
+                .catch(err => console.error('Failed to fetch performance', err));
+        }
+    }, [activeTab, token]);
 
     useEffect(() => {
         if (token) {
@@ -182,6 +208,81 @@ const SPAdminDashboard: React.FC = () => {
              );
         }
 
+        if (activeTab === 'performance') {
+            if (!performanceData) return <div className="p-10 text-center">Loading performance data...</div>;
+
+            return (
+                <div className="space-y-8">
+                    {performanceData.rating < 3.5 && (
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+                            <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
+                            <div>
+                                <h4 className="font-bold text-red-800">Warning: Low Rating</h4>
+                                <p className="text-sm text-red-700">
+                                    Your average rating is {performanceData.rating.toFixed(1)}.
+                                    Service providers with a rating below 3.0 risk account deactivation.
+                                    Please focus on improving your service quality.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                            <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                                <Star className="w-6 h-6 text-yellow-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500 font-medium uppercase">Average Rating</p>
+                                <p className="text-3xl font-black text-gray-900">{performanceData.rating.toFixed(1)}</p>
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                <TrendingUp className="w-6 h-6 text-green-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500 font-medium uppercase">Project Wins</p>
+                                <p className="text-3xl font-black text-gray-900">{performanceData.projectWins}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-4">User Reviews</h3>
+                        <div className="space-y-4">
+                            {performanceData.reviews.length === 0 && (
+                                <p className="text-gray-500 italic">No reviews yet.</p>
+                            )}
+                            {performanceData.reviews.map(review => (
+                                <motion.div
+                                    key={review.id}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm"
+                                >
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="flex">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star
+                                                    key={i}
+                                                    className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`}
+                                                />
+                                            ))}
+                                        </div>
+                                        <span className="text-xs text-gray-400">
+                                            {new Date(review.createdAt).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                    <p className="text-gray-700">"{review.comment || 'No comment provided.'}"</p>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     };
 
@@ -201,6 +302,7 @@ const SPAdminDashboard: React.FC = () => {
                         { id: 'requests', label: 'New Requests', icon: Briefcase },
                         { id: 'quotes', label: 'My Quotes', icon: FileText },
                         { id: 'accepted', label: 'Accepted Jobs', icon: CheckCircle },
+                        { id: 'performance', label: 'Performance', icon: TrendingUp },
                         { id: 'profile', label: 'Profile', icon: User },
                         { id: 'settings', label: 'Settings', icon: Settings },
                     ].map((item) => (
@@ -246,11 +348,13 @@ const SPAdminDashboard: React.FC = () => {
                             {activeTab === 'requests' && 'Job Requests'}
                             {activeTab === 'quotes' && 'My Quotes'}
                             {activeTab === 'accepted' && 'Accepted Jobs'}
+                            {activeTab === 'performance' && 'Performance Overview'}
                         </h1>
                         <p className="text-gray-500">
                             {activeTab === 'requests' && 'View and quote on nearby projects matched to your trades.'}
                             {activeTab === 'quotes' && 'Track the status of your submitted quotes.'}
                             {activeTab === 'accepted' && 'Manage your ongoing and upcoming jobs.'}
+                            {activeTab === 'performance' && 'Monitor your rating, wins, and customer feedback.'}
                         </p>
                     </div>
                     {activeTab === 'requests' && (

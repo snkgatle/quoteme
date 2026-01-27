@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { updateProfile, getAvailableProjects, generateBioContent, submitQuote, deleteAccount } from '../controllers/sp.controller';
+import { updateProfile, getAvailableProjects, generateBioContent, submitQuote, deleteAccount, getPerformance } from '../controllers/sp.controller';
 import { authenticateSP } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -21,5 +21,6 @@ router.put('/profile', authenticateSP, upload.single('certification'), updatePro
 router.delete('/profile', authenticateSP, deleteAccount);
 router.get('/available-projects', authenticateSP, getAvailableProjects);
 router.post('/quotes', authenticateSP, submitQuote);
+router.get('/performance', authenticateSP, getPerformance);
 
 export default router;
