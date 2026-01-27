@@ -77,19 +77,19 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
         });
 
         const formattedSentQuotes = sentQuotes.map(quote => {
-             let statusBadge = 'Pending';
-             if (quote.status === 'ACCEPTED') statusBadge = 'Awarded';
-             else if (quote.status === 'REJECTED') statusBadge = 'Lost';
-             else if (quote.request.status !== 'PENDING' && quote.status === 'PENDING') statusBadge = 'Lost';
+            let statusBadge = 'Pending';
+            if (quote.status === 'ACCEPTED') statusBadge = 'Awarded';
+            else if (quote.status === 'REJECTED') statusBadge = 'Lost';
+            else if (quote.request.status !== 'PENDING' && quote.status === 'PENDING') statusBadge = 'Lost';
 
-             return {
-                 ...quote,
-                 statusBadge,
-                 request: {
-                     ...quote.request,
-                     user: quote.status === 'ACCEPTED' ? quote.request.user : { name: 'Anonymous User' }
-                 }
-             };
+            return {
+                ...quote,
+                statusBadge,
+                request: {
+                    ...quote.request,
+                    user: quote.status === 'ACCEPTED' ? quote.request.user : { name: 'Anonymous User' }
+                }
+            };
         });
 
         // 3. Accepted Jobs
@@ -108,73 +108,73 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
 };
 
 export const updateProfile = async (req: Request, res: Response) => {
-  const user = (req as AuthRequest).user;
-  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const user = (req as AuthRequest).user;
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-  const {
-    businessName,
-    bio,
-    latitude,
-    longitude,
-    services,
-  } = req.body;
-
-  try {
-    let parsedServices = services;
-    if (typeof services === 'string') {
-        try {
-            parsedServices = JSON.parse(services);
-        } catch (e) {
-            parsedServices = [services];
-        }
-    }
-    // Ensure parsedServices is array
-    if (!Array.isArray(parsedServices)) {
-        parsedServices = [];
-    }
-
-    const lat = latitude ? parseFloat(latitude) : undefined;
-    const lon = longitude ? parseFloat(longitude) : undefined;
-
-    const currentSP = await prisma.serviceProvider.findUnique({
-      where: { id: user.id },
-    });
-
-    let certificationUrl = undefined;
-    let newStatus = currentSP?.status || 'ACTIVE';
-
-    if (req.file) {
-      certificationUrl = await uploadFile(req.file);
-      newStatus = 'PENDING_VERIFICATION';
-    } else {
-        // If finishing onboarding (was ONBOARDING) and no file uploaded -> ACTIVE
-        if (currentSP?.status === 'ONBOARDING') {
-            newStatus = 'ACTIVE';
-        }
-    }
-
-    const updateData: any = {
-        name: businessName,
+    const {
+        businessName,
         bio,
-        latitude: lat,
-        longitude: lon,
-        trades: parsedServices,
-        status: newStatus,
-    };
+        latitude,
+        longitude,
+        services,
+    } = req.body;
 
-    if (certificationUrl) {
-        updateData.certification_url = certificationUrl;
+    try {
+        let parsedServices = services;
+        if (typeof services === 'string') {
+            try {
+                parsedServices = JSON.parse(services);
+            } catch (e) {
+                parsedServices = [services];
+            }
+        }
+        // Ensure parsedServices is array
+        if (!Array.isArray(parsedServices)) {
+            parsedServices = [];
+        }
+
+        const lat = latitude ? parseFloat(latitude) : undefined;
+        const lon = longitude ? parseFloat(longitude) : undefined;
+
+        const currentSP = await prisma.serviceProvider.findUnique({
+            where: { id: user.id },
+        });
+
+        let certificationUrl = undefined;
+        let newStatus = currentSP?.status || 'ACTIVE';
+
+        if (req.file) {
+            certificationUrl = await uploadFile(req.file);
+            newStatus = 'PENDING_VERIFICATION';
+        } else {
+            // If finishing onboarding (was ONBOARDING) and no file uploaded -> ACTIVE
+            if (currentSP?.status === 'ONBOARDING') {
+                newStatus = 'ACTIVE';
+            }
+        }
+
+        const updateData: any = {
+            name: businessName,
+            bio,
+            latitude: lat,
+            longitude: lon,
+            trades: parsedServices,
+            status: newStatus,
+        };
+
+        if (certificationUrl) {
+            updateData.certification_url = certificationUrl;
+        }
+
+        const updatedSP = await prisma.serviceProvider.update({
+            where: { id: user.id },
+            data: updateData,
+        });
+
+        const { password: _, ...userInfo } = updatedSP;
+        res.json({ message: 'Profile updated successfully', user: userInfo });
+    } catch (error) {
+        console.error('Update profile error:', error);
+        res.status(500).json({ error: 'Failed to update profile' });
     }
-
-    const updatedSP = await prisma.serviceProvider.update({
-      where: { id: user.id },
-      data: updateData,
-    });
-
-    const { password: _, ...userInfo } = updatedSP;
-    res.json({ message: 'Profile updated successfully', user: userInfo });
-  } catch (error) {
-    console.error('Update profile error:', error);
-    res.status(500).json({ error: 'Failed to update profile' });
-  }
 };
