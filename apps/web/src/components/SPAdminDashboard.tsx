@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import Inbox from './Inbox';
 import SPSettings from './SPSettings';
 import QuoteForm from './QuoteForm';
+import { SkeletonList } from './SkeletonLoader';
 
 interface Review {
     id: string;
@@ -117,7 +118,9 @@ const SPAdminDashboard: React.FC = () => {
     };
 
     const renderContent = () => {
-        if (loading) return <div className="p-10 text-center">Loading...</div>;
+        if (loading && ['requests', 'quotes', 'accepted'].includes(activeTab)) {
+            return <SkeletonList />;
+        }
 
         if (activeTab === 'requests') {
             return (
