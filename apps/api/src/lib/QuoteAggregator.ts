@@ -25,10 +25,18 @@ export async function aggregateQuotesForProject(projectId: string) {
     const isComplete = project.requiredTrades.every((trade: string) => providedTrades.includes(trade));
 
     if (!isComplete) {
-        return {
-            status: 'INCOMPLETE',
-            missingTrades: project.requiredTrades.filter((trade: string) => !providedTrades.includes(trade))
-        };
+        // TTL Logic: Check if 48 hours have passed
+        const createdDate = new Date(project.createdAt);
+        const now = new Date();
+        const diffHours = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60);
+
+        if (diffHours < 48) {
+            return {
+                status: 'INCOMPLETE',
+                missingTrades: project.requiredTrades.filter((trade: string) => !providedTrades.includes(trade))
+            };
+        }
+        // If > 48h, proceed to generate Partial Combined Quote
     }
 
     // 3. Aggregate total cost
@@ -38,13 +46,15 @@ export async function aggregateQuotesForProject(projectId: string) {
     const summary = await generateCombinedSummary(project.description, project.quotes);
 
     // 5. Update database and return combined object
-    const updatedProject = await prisma.quoteRequest.update({
-        where: { id: projectId },
-        data: {
-            isCombinedSent: true,
-            status: 'COMBINED_SENT'
-        }
-    });
+    if (!project.isCombinedSent) {
+        await prisma.quoteRequest.update({
+            where: { id: projectId },
+            data: {
+                isCombinedSent: true,
+                status: 'COMBINED_SENT'
+            }
+        });
+    }
 
     const spProfileLinks = project.quotes.map((q: any) => ({
         name: q.serviceProvider.name,
@@ -53,11 +63,12 @@ export async function aggregateQuotesForProject(projectId: string) {
     }));
 
     return {
-        status: 'COMPLETE',
+        status: isComplete ? 'COMPLETE' : 'PARTIAL_COMPLETE',
         projectId: project.id,
         totalCost,
         summary,
         spProfileLinks,
-        isCombinedSent: true
+        isCombinedSent: true,
+        missingTrades: !isComplete ? project.requiredTrades.filter((trade: string) => !providedTrades.includes(trade)) : []
     };
 }
