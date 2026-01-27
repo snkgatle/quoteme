@@ -210,3 +210,19 @@ export const submitQuote = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to submit quote' });
     }
 };
+
+export const deleteAccount = async (req: Request, res: Response) => {
+    const user = (req as AuthRequest).user;
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+        await prisma.serviceProvider.delete({
+            where: { id: user.id },
+        });
+
+        res.json({ message: 'Account deleted successfully' });
+    } catch (error) {
+        console.error('Delete account error:', error);
+        res.status(500).json({ error: 'Failed to delete account' });
+    }
+};
