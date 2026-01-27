@@ -9,6 +9,7 @@ export async function aggregateQuotesForProject(projectId: string) {
     const project = await prisma.quoteRequest.findUnique({
         where: { id: projectId },
         include: {
+            user: true,
             quotes: {
                 include: {
                     serviceProvider: true
@@ -71,6 +72,27 @@ export async function aggregateQuotesForProject(projectId: string) {
                 status: 'COMBINED_SENT'
             }
         });
+
+        // Trigger Notifications for Selected Service Providers
+        for (const quote of selectedQuotes) {
+            const userContact = project.user ? `${project.user.name} (${project.user.phone}, ${project.user.email})` : 'Contact info unavailable';
+
+            try {
+                await prisma.notification.create({
+                    data: {
+                        serviceProviderId: quote.serviceProviderId,
+                        type: 'QUOTE_ACCEPTED',
+                        message: `Your quote for project matching ${quote.trade || 'General'} has been accepted! User Contact: ${userContact}`,
+                        projectId: project.id
+                    }
+                });
+            } catch (error: any) {
+                // Ignore unique constraint violations
+                if (error.code !== 'P2002') {
+                    throw error;
+                }
+            }
+        }
     }
 
     const spProfileLinks = project.quotes.map((q: any) => ({

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Briefcase, FileText, Settings, User, MapPin, EyeOff, Send, LogOut, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { LayoutDashboard, Briefcase, FileText, Settings, User, MapPin, EyeOff, Send, LogOut, CheckCircle, XCircle, Clock, Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import Inbox from './Inbox';
 import SPSettings from './SPSettings';
 
 interface Project {
@@ -104,43 +105,42 @@ const SPAdminDashboard: React.FC = () => {
         if (activeTab === 'quotes') {
             return (
                 <div className="grid grid-cols-1 gap-6">
-                     {sentQuotes.length === 0 && <p className="text-gray-500">You haven't sent any quotes yet.</p>}
+                    {sentQuotes.length === 0 && <p className="text-gray-500">You haven't sent any quotes yet.</p>}
                     {sentQuotes.map((quote) => (
-                         <motion.div
+                        <motion.div
                             key={quote.id}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
                         >
-                             <div className="flex justify-between items-start mb-4">
+                            <div className="flex justify-between items-start mb-4">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2">
-                                         <span className="text-xs font-bold text-primary-600 uppercase tracking-wider">{quote.request.requiredTrades.join(', ')}</span>
-                                         <span className="text-gray-300">•</span>
-                                         <span className="text-xs text-gray-500">{quote.id}</span>
+                                        <span className="text-xs font-bold text-primary-600 uppercase tracking-wider">{quote.request.requiredTrades.join(', ')}</span>
+                                        <span className="text-gray-300">•</span>
+                                        <span className="text-xs text-gray-500">{quote.id}</span>
                                     </div>
                                     <h3 className="text-lg font-bold text-gray-900 capitalize">{quote.request.description}</h3>
                                 </div>
                                 {/* Status Badge */}
-                                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold border ${
-                                    quote.statusBadge === 'Awarded' ? 'bg-green-50 text-green-700 border-green-100' :
-                                    quote.statusBadge === 'Lost' ? 'bg-red-50 text-red-700 border-red-100' :
-                                    'bg-amber-50 text-amber-700 border-amber-100'
-                                }`}>
+                                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold border ${quote.statusBadge === 'Awarded' ? 'bg-green-50 text-green-700 border-green-100' :
+                                        quote.statusBadge === 'Lost' ? 'bg-red-50 text-red-700 border-red-100' :
+                                            'bg-amber-50 text-amber-700 border-amber-100'
+                                    }`}>
                                     {quote.statusBadge === 'Awarded' && <CheckCircle className="w-3 h-3" />}
                                     {quote.statusBadge === 'Lost' && <XCircle className="w-3 h-3" />}
                                     {quote.statusBadge === 'Pending' && <Clock className="w-3 h-3" />}
                                     {quote.statusBadge}
                                 </div>
                             </div>
-                             <div className="flex items-center gap-4 mb-2">
+                            <div className="flex items-center gap-4 mb-2">
                                 <div className="text-sm text-gray-600">
                                     You quoted: <span className="font-bold text-gray-900">${quote.amount}</span>
                                 </div>
                             </div>
-                             <div className="text-sm text-gray-500 mb-4 line-clamp-2">
-                                 {quote.proposal}
-                             </div>
+                            <div className="text-sm text-gray-500 mb-4 line-clamp-2">
+                                {quote.proposal}
+                            </div>
                         </motion.div>
                     ))}
                 </div>
@@ -148,11 +148,11 @@ const SPAdminDashboard: React.FC = () => {
         }
 
         if (activeTab === 'accepted') {
-             return (
+            return (
                 <div className="grid grid-cols-1 gap-6">
                     {acceptedJobs.length === 0 && <p className="text-gray-500">No accepted jobs yet.</p>}
-                     {acceptedJobs.map((quote) => (
-                         <motion.div
+                    {acceptedJobs.map((quote) => (
+                        <motion.div
                             key={quote.id}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -174,13 +174,17 @@ const SPAdminDashboard: React.FC = () => {
                                     <p className="text-sm font-semibold text-gray-900">{quote.request.latitude}, {quote.request.longitude}</p>
                                 </div>
                             </div>
-                             <button className="w-full bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-700 transition-colors">
-                                 Contact Customer
-                             </button>
-                         </motion.div>
-                     ))}
+                            <button className="w-full bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-700 transition-colors">
+                                Contact Customer
+                            </button>
+                        </motion.div>
+                    ))}
                 </div>
-             );
+            );
+        }
+
+        if (activeTab === 'inbox') {
+            return <Inbox token={token} />;
         }
 
         if (activeTab === 'profile' || activeTab === 'settings') {
@@ -203,6 +207,7 @@ const SPAdminDashboard: React.FC = () => {
 
                 <nav className="space-y-1 flex-1">
                     {[
+                        { id: 'inbox', label: 'Inbox', icon: Bell },
                         { id: 'requests', label: 'New Requests', icon: Briefcase },
                         { id: 'quotes', label: 'My Quotes', icon: FileText },
                         { id: 'accepted', label: 'Accepted Jobs', icon: CheckCircle },
@@ -213,8 +218,8 @@ const SPAdminDashboard: React.FC = () => {
                             key={item.id}
                             onClick={() => setActiveTab(item.id)}
                             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === item.id
-                                    ? 'bg-primary-50 text-primary-700'
-                                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                ? 'bg-primary-50 text-primary-700'
+                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                 }`}
                         >
                             <item.icon className="w-4 h-4" />
@@ -248,12 +253,14 @@ const SPAdminDashboard: React.FC = () => {
                 <header className="mb-8 flex justify-between items-end">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">
+                            {activeTab === 'inbox' && 'Inbox'}
                             {activeTab === 'requests' && 'Job Requests'}
                             {activeTab === 'quotes' && 'My Quotes'}
                             {activeTab === 'accepted' && 'Accepted Jobs'}
                             {(activeTab === 'profile' || activeTab === 'settings') && 'Profile & Settings'}
                         </h1>
                         <p className="text-gray-500">
+                            {activeTab === 'inbox' && 'View your notifications and alerts.'}
                             {activeTab === 'requests' && 'View and quote on nearby projects matched to your trades.'}
                             {activeTab === 'quotes' && 'Track the status of your submitted quotes.'}
                             {activeTab === 'accepted' && 'Manage your ongoing and upcoming jobs.'}
