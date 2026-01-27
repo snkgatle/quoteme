@@ -57,6 +57,7 @@ model Quote {
   amount            Float
   trade             String?
   proposal          String         @db.Text
+  isSelected        Boolean        @default(false)
   status            String         @default("PENDING")
   createdAt         DateTime       @default(now())
 }
