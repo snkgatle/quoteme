@@ -206,8 +206,11 @@ export const submitQuote = async (req: Request, res: Response) => {
         res.status(201).json({ message: 'Quote submitted successfully', quote });
     } catch (error: any) {
         if (error.code === 'P2002') { // Prisma unique constraint violation code
-             logger.warn('Duplicate quote submission attempt', { serviceProviderId: user.id, requestId });
-             return res.status(409).json({ error: 'You have already submitted a quote for this request.' });
+            logger.warn('Duplicate quote submission attempt', { serviceProviderId: user.id, requestId });
+            return res.status(409).json({ error: 'You have already submitted a quote for this request.' });
+        }
+        if (error.code === 'P2003') { // Prisma foreign key constraint violation code
+            return res.status(404).json({ error: 'Project not found.' });
         }
         logger.error('Submit quote error', { error, serviceProviderId: user.id, requestId });
         res.status(500).json({ error: 'Failed to submit quote' });
