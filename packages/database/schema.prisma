@@ -28,6 +28,7 @@ model ServiceProvider {
   status      String   @default("ACTIVE")
   certification_url String?
   rating      Float    @default(5.0)
+  reviewCount Int      @default(0)
   quotes      Quote[]
   createdAt   DateTime @default(now())
 
