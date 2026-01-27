@@ -35,3 +35,7 @@ logs/
 
 # Docker
 .dockerignore
+
+# Database
+*.db
+*.sqlite

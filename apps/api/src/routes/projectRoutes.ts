@@ -4,6 +4,21 @@ import { aggregateQuotesForProject } from '../lib/QuoteAggregator';
 
 const router = Router();
 
+// POST /api/projects/:id/aggregate
+router.post('/:id/aggregate', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const result = await aggregateQuotesForProject(id);
+        res.json(result);
+    } catch (error: any) {
+        if (error.message === 'Project not found') {
+            return res.status(404).json({ error: 'Project not found' });
+        }
+        console.error('Aggregation error:', error);
+        res.status(500).json({ error: 'Failed to aggregate quotes' });
+    }
+});
+
 // GET /api/projects/:id - Integrated Data Masking Logic
 router.get('/:id', async (req: Request, res: Response) => {
     try {

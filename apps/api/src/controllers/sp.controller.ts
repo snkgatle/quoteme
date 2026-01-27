@@ -178,3 +178,35 @@ export const updateProfile = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to update profile' });
     }
 };
+
+export const submitQuote = async (req: Request, res: Response) => {
+    const user = (req as AuthRequest).user;
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { requestId, amount, proposal, trade } = req.body;
+
+    if (!requestId || !amount || !proposal) {
+        return res.status(400).json({ error: 'Request ID, amount, and proposal are required.' });
+    }
+
+    try {
+        const quote = await prisma.quote.create({
+            data: {
+                requestId,
+                serviceProviderId: user.id,
+                amount: parseFloat(amount),
+                proposal,
+                trade,
+                status: 'PENDING'
+            }
+        });
+
+        res.status(201).json({ message: 'Quote submitted successfully', quote });
+    } catch (error: any) {
+        if (error.code === 'P2002') { // Prisma unique constraint violation code
+             return res.status(409).json({ error: 'You have already submitted a quote for this request.' });
+        }
+        console.error('Submit quote error:', error);
+        res.status(500).json({ error: 'Failed to submit quote' });
+    }
+};
