@@ -262,15 +262,18 @@ export const getPerformance = async (req: Request, res: Response) => {
             }
         });
 
-        if (!sp) return res.status(404).json({ error: 'Service Provider not found' });
+        // Cast to any to bypass stale types in the database package if needed
+        const spInfo = sp as any;
 
-        const projectWins = sp.quotes.length;
+        if (!spInfo) return res.status(404).json({ error: 'Service Provider not found' });
+
+        const projectWins = spInfo.quotes.length;
 
         res.json({
-            rating: sp.rating,
-            reviewCount: sp.reviewCount,
+            rating: spInfo.rating,
+            reviewCount: spInfo.reviewCount,
             projectWins,
-            reviews: sp.reviews
+            reviews: spInfo.reviews
         });
     } catch (error) {
         console.error('Get performance error:', error);
