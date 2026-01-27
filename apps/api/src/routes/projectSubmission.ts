@@ -14,15 +14,15 @@ router.post('/', async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Latitude, longitude, and description are required.' });
         }
 
-        // 1. Extract trades via Gemini AI
-        const requiredTrades = await extractTrades(description);
-
-        // 2. Upsert user and create project request
-        const user = await prisma.user.upsert({
-            where: { email: userEmail },
-            update: { name: userName, phone: userPhone },
-            create: { email: userEmail, name: userName, phone: userPhone },
-        });
+        // 1 & 2. Extract trades and Upsert user concurrently
+        const [requiredTrades, user] = await Promise.all([
+            extractTrades(description),
+            prisma.user.upsert({
+                where: { email: userEmail },
+                update: { name: userName, phone: userPhone },
+                create: { email: userEmail, name: userName, phone: userPhone },
+            }),
+        ]);
 
         const project = await prisma.quoteRequest.create({
             data: {
