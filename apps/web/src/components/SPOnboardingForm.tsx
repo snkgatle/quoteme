@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Upload, Sparkles, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import ProfilePreview from './ProfilePreview';
 
 const libraries: ("places")[] = ["places"];
 
@@ -312,6 +313,19 @@ const SPOnboardingForm: React.FC = () => {
                             Verified: Qualified Service Provider
                         </p>
                     )}
+                </div>
+
+                {/* Profile Preview */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Profile Preview</label>
+                    <ProfilePreview
+                        businessName={formData.businessName}
+                        bio={formData.bio || formData.notes}
+                        services={formData.services}
+                        latitude={formData.latitude}
+                        longitude={formData.longitude}
+                        isLoaded={isLoaded}
+                    />
                 </div>
 
                 <button
