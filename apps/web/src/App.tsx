@@ -6,6 +6,7 @@ import Header from './components/Header'
 import Home from './pages/Home'
 import Footer from './components/Footer'
 import SPLogin from './pages/SPLogin'
+import QuoteReview from './pages/QuoteReview'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthProvider } from './context/AuthContext'
 
@@ -20,6 +21,7 @@ function App() {
                             <Route path="/" element={<Home />} />
                             <Route path="/request-quote" element={<div className="py-20 bg-gray-50"><ProjectIntakeForm /></div>} />
                             <Route path="/sp-login" element={<SPLogin />} />
+                            <Route path="/projects/:id/review" element={<QuoteReview />} />
                             <Route path="/onboard" element={<div className="py-20 bg-gray-50"><SPOnboardingForm /></div>} />
                             <Route path="/dashboard" element={
                                 <ProtectedRoute>
