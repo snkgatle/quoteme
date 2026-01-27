@@ -45,7 +45,7 @@ const ProfilePreview: React.FC<ProfilePreviewProps> = ({
                         <div className="flex items-center bg-white/20 px-2 py-1 rounded-lg backdrop-blur-sm">
                             <Star className="w-4 h-4 text-yellow-300 fill-yellow-300 mr-1" />
                             <span className="font-bold">5.0</span>
-                            <span className="text-xs ml-1 opacity-75">(New)</span>
+                            <span className="text-xs ml-1 font-bold opacity-90">(New)</span>
                         </div>
                     </div>
                 </div>

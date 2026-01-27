@@ -14,13 +14,17 @@ export async function updateServiceProviderRating(providerId: string, newRating:
 
     // Auto-deactivation logic: If rating drops below 3.0, set status to DEACTIVATED
     // Prevent rating shock: Only deactivate if SP has at least 3 reviews
-    if (provider.rating < 3.0 && provider.reviewCount >= 3 && provider.status !== 'DEACTIVATED') {
-        console.log(`[Audit] Auto-deactivating Service Provider ${providerId} due to low rating: ${provider.rating}`);
-        await prisma.serviceProvider.update({
-            where: { id: providerId },
-            data: { status: 'DEACTIVATED' }
-        });
-        return { ...provider, status: 'DEACTIVATED' };
+    if (provider.rating < 3.0 && provider.status !== 'DEACTIVATED') {
+        if (provider.reviewCount >= 3) {
+            console.log(`[Audit] Auto-deactivating Service Provider ${providerId} due to low rating: ${provider.rating}`);
+            await prisma.serviceProvider.update({
+                where: { id: providerId },
+                data: { status: 'DEACTIVATED' }
+            });
+            return { ...provider, status: 'DEACTIVATED' };
+        } else {
+            console.log(`[Audit] Prevented deactivation for SP ${providerId} (Rating: ${provider.rating}) due to insufficient reviews (${provider.reviewCount} < 3).`);
+        }
     }
 
     return provider;
