@@ -29,7 +29,7 @@ const schema = z.object({
 type QuoteFormData = z.infer<typeof schema>;
 
 const QuoteForm: React.FC<QuoteFormProps> = ({ project, onClose, onSubmitSuccess }) => {
-    const { token } = useAuth();
+    const { token, logout } = useAuth();
     const { register, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<QuoteFormData>({
         resolver: zodResolver(schema),
     });
@@ -49,6 +49,11 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ project, onClose, onSubmitSuccess
                     trade: project.requiredTrades[0] || 'General',
                 }),
             });
+
+            if (response.status === 401) {
+                logout();
+                return;
+            }
 
             if (!response.ok) {
                 const errorData = await response.json();

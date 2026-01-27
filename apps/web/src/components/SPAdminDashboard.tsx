@@ -60,7 +60,13 @@ const SPAdminDashboard: React.FC = () => {
             fetch('/api/sp/performance', {
                 headers: { Authorization: `Bearer ${token}` }
             })
-                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 401) {
+                        logout();
+                        throw new Error('Unauthorized');
+                    }
+                    return res.json();
+                })
                 .then(data => setPerformanceData(data))
                 .catch(err => console.error('Failed to fetch performance', err));
         }
@@ -72,7 +78,13 @@ const SPAdminDashboard: React.FC = () => {
             fetch('/api/sp/available-projects', {
                 headers: { Authorization: `Bearer ${token}` }
             })
-                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 401) {
+                        logout();
+                        throw new Error('Unauthorized');
+                    }
+                    return res.json();
+                })
                 .then(data => {
                     setNewRequests(data.newRequests || []);
                     setSentQuotes(data.sentQuotes || []);
@@ -104,7 +116,13 @@ const SPAdminDashboard: React.FC = () => {
             fetch('/api/sp/available-projects', {
                 headers: { Authorization: `Bearer ${token}` }
             })
-                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 401) {
+                        logout();
+                        throw new Error('Unauthorized');
+                    }
+                    return res.json();
+                })
                 .then(data => {
                     setNewRequests(data.newRequests || []);
                     setSentQuotes(data.sentQuotes || []);
