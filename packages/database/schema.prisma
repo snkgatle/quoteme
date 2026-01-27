@@ -13,6 +13,7 @@ model User {
   name      String?
   phone     String?
   requests  QuoteRequest[]
+  reviews   Review[]
   createdAt DateTime @default(now())
 }
 
@@ -30,6 +31,7 @@ model ServiceProvider {
   rating      Float    @default(5.0)
   reviewCount Int      @default(0)
   quotes      Quote[]
+  reviews     Review[]
   notifications Notification[]
   createdAt   DateTime @default(now())
 
@@ -64,6 +66,17 @@ model Quote {
   createdAt         DateTime       @default(now())
 
   @@unique([requestId, serviceProviderId, trade])
+}
+
+model Review {
+  id                String          @id @default(cuid())
+  serviceProviderId String
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User            @relation(fields: [userId], references: [id])
+  rating            Int
+  comment           String?         @db.Text
+  createdAt         DateTime        @default(now())
 }
 
 model Notification {

@@ -229,3 +229,43 @@ export const deleteAccount = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to delete account' });
     }
 };
+
+export const getPerformance = async (req: Request, res: Response) => {
+    const user = (req as AuthRequest).user;
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+        const sp = await prisma.serviceProvider.findUnique({
+            where: { id: user.id },
+            include: {
+                reviews: {
+                    orderBy: { createdAt: 'desc' },
+                    select: {
+                        id: true,
+                        rating: true,
+                        comment: true,
+                        createdAt: true
+                    }
+                },
+                quotes: {
+                    where: { isSelected: true },
+                    select: { id: true }
+                }
+            }
+        });
+
+        if (!sp) return res.status(404).json({ error: 'Service Provider not found' });
+
+        const projectWins = sp.quotes.length;
+
+        res.json({
+            rating: sp.rating,
+            reviewCount: sp.reviewCount,
+            projectWins,
+            reviews: sp.reviews
+        });
+    } catch (error) {
+        console.error('Get performance error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
