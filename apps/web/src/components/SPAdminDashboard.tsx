@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { LayoutDashboard, Briefcase, FileText, Settings, User, MapPin, EyeOff, Send, LogOut, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import SPSettings from './SPSettings';
 
 interface Project {
     id: string;
@@ -182,6 +183,10 @@ const SPAdminDashboard: React.FC = () => {
              );
         }
 
+        if (activeTab === 'profile' || activeTab === 'settings') {
+            return <SPSettings />;
+        }
+
         return null;
     };
 
@@ -246,11 +251,13 @@ const SPAdminDashboard: React.FC = () => {
                             {activeTab === 'requests' && 'Job Requests'}
                             {activeTab === 'quotes' && 'My Quotes'}
                             {activeTab === 'accepted' && 'Accepted Jobs'}
+                            {(activeTab === 'profile' || activeTab === 'settings') && 'Profile & Settings'}
                         </h1>
                         <p className="text-gray-500">
                             {activeTab === 'requests' && 'View and quote on nearby projects matched to your trades.'}
                             {activeTab === 'quotes' && 'Track the status of your submitted quotes.'}
                             {activeTab === 'accepted' && 'Manage your ongoing and upcoming jobs.'}
+                            {(activeTab === 'profile' || activeTab === 'settings') && 'Manage your business profile and account settings.'}
                         </p>
                     </div>
                     {activeTab === 'requests' && (
