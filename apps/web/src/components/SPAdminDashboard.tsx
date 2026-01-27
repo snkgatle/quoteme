@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Briefcase, FileText, Settings, User, MapPin, EyeOff, Send, LogOut, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { LayoutDashboard, Briefcase, FileText, Settings, User, MapPin, EyeOff, Send, LogOut, CheckCircle, XCircle, Clock, Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import Inbox from './Inbox';
 
 interface Project {
     id: string;
@@ -182,6 +183,10 @@ const SPAdminDashboard: React.FC = () => {
              );
         }
 
+        if (activeTab === 'inbox') {
+            return <Inbox token={token} />;
+        }
+
         return null;
     };
 
@@ -198,6 +203,7 @@ const SPAdminDashboard: React.FC = () => {
 
                 <nav className="space-y-1 flex-1">
                     {[
+                        { id: 'inbox', label: 'Inbox', icon: Bell },
                         { id: 'requests', label: 'New Requests', icon: Briefcase },
                         { id: 'quotes', label: 'My Quotes', icon: FileText },
                         { id: 'accepted', label: 'Accepted Jobs', icon: CheckCircle },
@@ -243,11 +249,13 @@ const SPAdminDashboard: React.FC = () => {
                 <header className="mb-8 flex justify-between items-end">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">
+                            {activeTab === 'inbox' && 'Inbox'}
                             {activeTab === 'requests' && 'Job Requests'}
                             {activeTab === 'quotes' && 'My Quotes'}
                             {activeTab === 'accepted' && 'Accepted Jobs'}
                         </h1>
                         <p className="text-gray-500">
+                            {activeTab === 'inbox' && 'View your notifications and alerts.'}
                             {activeTab === 'requests' && 'View and quote on nearby projects matched to your trades.'}
                             {activeTab === 'quotes' && 'Track the status of your submitted quotes.'}
                             {activeTab === 'accepted' && 'Manage your ongoing and upcoming jobs.'}
