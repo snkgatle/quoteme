@@ -40,8 +40,9 @@ router.post('/', async (req: Request, res: Response) => {
         const allActiveSPs = await prisma.serviceProvider.findMany({
             where: {
                 status: 'ACTIVE',
-                // Optional: Filter by trades if needed at DB level, 
-                // though array intersection is easier in JS for Prisma.
+                trades: {
+                    hasSome: requiredTrades,
+                },
             },
         });
 
@@ -51,10 +52,7 @@ router.post('/', async (req: Request, res: Response) => {
             const distance = calculateDistance(latitude, longitude, sp.latitude, sp.longitude);
             const isNearby = distance <= 50; // 50km radius
 
-            // Filter by trade match (at least one matching trade)
-            const hasMatchingTrade = sp.trades.some((trade: string) => requiredTrades.includes(trade));
-
-            return isNearby && hasMatchingTrade;
+            return isNearby;
         });
 
         // 4. Trigger asynchronous notifications
