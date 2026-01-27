@@ -5,6 +5,11 @@ import { calculateDistance } from '../lib/geo';
 import { generateBio as generateBioFromAI } from '../lib/gemini';
 import { uploadFile } from '../lib/storage';
 import { logger } from '../lib/logger';
+import { TRADES } from '../lib/constants';
+
+export const getAvailableTrades = async (req: Request, res: Response) => {
+    res.json({ trades: TRADES });
+};
 
 export const generateBioContent = async (req: Request, res: Response) => {
     const { notes } = req.body;
@@ -206,8 +211,8 @@ export const submitQuote = async (req: Request, res: Response) => {
         res.status(201).json({ message: 'Quote submitted successfully', quote });
     } catch (error: any) {
         if (error.code === 'P2002') { // Prisma unique constraint violation code
-             logger.warn('Duplicate quote submission attempt', { serviceProviderId: user.id, requestId });
-             return res.status(409).json({ error: 'You have already submitted a quote for this request.' });
+            logger.warn('Duplicate quote submission attempt', { serviceProviderId: user.id, requestId });
+            return res.status(409).json({ error: 'You have already submitted a quote for this request.' });
         }
         logger.error('Submit quote error', { error, serviceProviderId: user.id, requestId });
         res.status(500).json({ error: 'Failed to submit quote' });

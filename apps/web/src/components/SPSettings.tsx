@@ -21,6 +21,7 @@ const SPSettings: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
     const [addressInput, setAddressInput] = useState('');
     const [isEnhancing, setIsEnhancing] = useState(false);
+    const [availableServices, setAvailableServices] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -50,6 +51,22 @@ const SPSettings: React.FC = () => {
             }
         }
     }, [user]);
+
+    useEffect(() => {
+        const fetchTrades = async () => {
+            try {
+                const response = await fetch('/api/sp/available-trades');
+                const data = await response.json();
+                if (data.trades) {
+                    setAvailableServices(data.trades);
+                }
+            } catch (error) {
+                console.error('Failed to fetch trades', error);
+                setAvailableServices(["Plumbing", "Electrical", "Carpenter", "Painting", "Roofing", "Landscaping"]);
+            }
+        };
+        fetchTrades();
+    }, []);
 
     const handlePlaceSelect = () => {
         if (autocompleteRef.current !== null) {
@@ -138,7 +155,6 @@ const SPSettings: React.FC = () => {
         }
     };
 
-    const availableServices = ["Plumbing", "Electrical", "Carpentry", "Painting", "Roofing", "Landscaping"];
 
     return (
         <motion.div
@@ -289,10 +305,10 @@ const SPSettings: React.FC = () => {
                         <label className="block text-sm font-bold text-gray-900 mb-2">Certifications & Licenses</label>
 
                         {user?.certification_url && (
-                             <div className="mb-4 p-3 bg-blue-50 text-blue-800 rounded-lg flex items-center gap-2 text-sm border border-blue-100">
+                            <div className="mb-4 p-3 bg-blue-50 text-blue-800 rounded-lg flex items-center gap-2 text-sm border border-blue-100">
                                 <CheckCircle className="w-4 h-4" />
                                 <span>Current Certification uploaded. Uploading a new one will replace it and trigger re-verification.</span>
-                             </div>
+                            </div>
                         )}
 
                         <div className="relative group">
