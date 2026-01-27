@@ -4,6 +4,7 @@ import { LayoutDashboard, Briefcase, FileText, Settings, User, MapPin, EyeOff, S
 import { useAuth } from '../context/AuthContext';
 import Inbox from './Inbox';
 import SPSettings from './SPSettings';
+import QuoteForm from './QuoteForm';
 
 interface Review {
     id: string;
@@ -50,6 +51,9 @@ const SPAdminDashboard: React.FC = () => {
     const [acceptedJobs, setAcceptedJobs] = useState<Quote[]>([]);
     const [performanceData, setPerformanceData] = useState<PerformanceData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [isQuoteFormOpen, setIsQuoteFormOpen] = useState(false);
+    const [showToast, setShowToast] = useState(false);
 
     useEffect(() => {
         if (activeTab === 'performance' && token) {
@@ -78,6 +82,39 @@ const SPAdminDashboard: React.FC = () => {
                 .finally(() => setLoading(false));
         }
     }, [token]);
+
+    const handleOpenQuoteForm = (project: Project) => {
+        setSelectedProject(project);
+        setIsQuoteFormOpen(true);
+    };
+
+    const handleCloseQuoteForm = () => {
+        setIsQuoteFormOpen(false);
+        setTimeout(() => setSelectedProject(null), 300);
+    };
+
+    const handleQuoteSuccess = () => {
+        handleCloseQuoteForm();
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+
+        // Refetch projects
+        if (token) {
+            setLoading(true);
+            fetch('/api/sp/available-projects', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    setNewRequests(data.newRequests || []);
+                    setSentQuotes(data.sentQuotes || []);
+                    setAcceptedJobs(data.acceptedJobs || []);
+                    setActiveTab('quotes');
+                })
+                .catch(err => console.error('Failed to fetch projects', err))
+                .finally(() => setLoading(false));
+        }
+    };
 
     const renderContent = () => {
         if (loading) return <div className="p-10 text-center">Loading...</div>;
@@ -117,7 +154,10 @@ const SPAdminDashboard: React.FC = () => {
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <button className="flex-1 bg-primary-600 text-white py-2.5 rounded-xl font-bold text-sm shadow-sm hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
+                                <button
+                                    onClick={() => handleOpenQuoteForm(req)}
+                                    className="flex-1 bg-primary-600 text-white py-2.5 rounded-xl font-bold text-sm shadow-sm hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
+                                >
                                     <Send className="w-4 h-4" />
                                     Submit Quote
                                 </button>
@@ -296,7 +336,22 @@ const SPAdminDashboard: React.FC = () => {
     };
 
     return (
-        <div className="flex min-h-screen bg-gray-50">
+        <div className="flex min-h-screen bg-gray-50 relative">
+            {showToast && (
+                <div className="fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 animate-bounce">
+                    <CheckCircle className="w-5 h-5" />
+                    Quote Submitted Successfully!
+                </div>
+            )}
+
+            {isQuoteFormOpen && selectedProject && (
+                <QuoteForm
+                    project={selectedProject}
+                    onClose={handleCloseQuoteForm}
+                    onSubmitSuccess={handleQuoteSuccess}
+                />
+            )}
+
             {/* Sidebar */}
             <aside className="w-64 bg-white border-r border-gray-200 p-6 flex flex-col">
                 <div className="flex items-center gap-2 mb-10 px-2">

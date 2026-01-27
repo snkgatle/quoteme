@@ -9,12 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@react-google-maps/api": "^2.20.8",
     "framer-motion": "^11.x",
     "lucide-react": "^0.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^7.13.0"
+    "react-hook-form": "^7.71.1",
+    "react-router-dom": "^7.13.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
