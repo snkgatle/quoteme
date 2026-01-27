@@ -3,6 +3,7 @@ import { prisma } from '@quoteme/database';
 import { extractTrades } from '../lib/gemini';
 import { notifyServiceProviders } from '../lib/notifications';
 import { calculateDistance } from '../lib/geo';
+import { logger } from '../lib/logger';
 
 const router = Router();
 
@@ -10,7 +11,14 @@ router.post('/', async (req: Request, res: Response) => {
     try {
         const { userEmail, userName, userPhone, latitude, longitude, description } = req.body;
 
+        logger.info('Project submission received', {
+            userEmail,
+            hasCoordinates: !!(latitude && longitude),
+            descriptionLength: description?.length
+        });
+
         if (!latitude || !longitude || !description) {
+            logger.warn('Project submission missing required fields', { body: req.body });
             return res.status(400).json({ error: 'Latitude, longitude, and description are required.' });
         }
 
@@ -59,6 +67,12 @@ router.post('/', async (req: Request, res: Response) => {
         const spIds = nearbySPs.map((sp: any) => sp.id);
         notifyServiceProviders(spIds, project.id);
 
+        logger.info('Project submitted successfully', {
+            projectId: project.id,
+            extractedTrades: requiredTrades,
+            countNotified: spIds.length,
+        });
+
         res.status(201).json({
             message: 'Project submitted successfully',
             projectId: project.id,
@@ -66,7 +80,7 @@ router.post('/', async (req: Request, res: Response) => {
             countNotified: spIds.length,
         });
     } catch (error) {
-        console.error('Project submission error:', error);
+        logger.error('Project submission error', { error });
         res.status(500).json({ error: 'Internal server error' });
     }
 });
