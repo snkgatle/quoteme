@@ -24,6 +24,7 @@ const SPOnboardingForm: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
     const [addressInput, setAddressInput] = useState('');
     const [isEnhancing, setIsEnhancing] = useState(false);
+    const [availableServices, setAvailableServices] = useState<string[]>([]);
     const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
     const { token, login, user } = useAuth();
     const navigate = useNavigate();
@@ -40,6 +41,23 @@ const SPOnboardingForm: React.FC = () => {
             }));
         }
     }, [user]);
+
+    useEffect(() => {
+        const fetchTrades = async () => {
+            try {
+                const response = await fetch('/api/sp/available-trades');
+                const data = await response.json();
+                if (data.trades) {
+                    setAvailableServices(data.trades);
+                }
+            } catch (error) {
+                console.error('Failed to fetch trades', error);
+                // Fallback to minimal list if API fails
+                setAvailableServices(["Plumbing", "Electrical", "Carpenter", "Painting", "Roofing", "Landscaping"]);
+            }
+        };
+        fetchTrades();
+    }, []);
 
     // Fields for unauthenticated registration
     const [email, setEmail] = useState('');
@@ -166,7 +184,6 @@ const SPOnboardingForm: React.FC = () => {
         }
     };
 
-    const availableServices = ["Plumbing", "Electrical", "Carpentry", "Painting", "Roofing", "Landscaping"];
 
     return (
         <motion.div
