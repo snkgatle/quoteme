@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
+import { useJsApiLoader } from '@react-google-maps/api';
+import PlaceAutocomplete from './PlaceAutocomplete';
 import { MapPin, FileText, Upload, CheckCircle, ChevronRight, ChevronLeft, Sparkles } from 'lucide-react';
 
 const libraries: ("places")[] = ["places"];
@@ -27,19 +28,16 @@ const ProjectIntakeForm: React.FC = () => {
         libraries
     });
 
-    const handlePlaceSelect = () => {
-        if (autocompleteRef.current !== null) {
-            const place = autocompleteRef.current.getPlace();
-            const lat = place.geometry?.location?.lat();
-            const lng = place.geometry?.location?.lng();
-            if (lat && lng && place.formatted_address) {
-                setFormData(prev => ({
-                    ...prev,
-                    address: place.formatted_address || '',
-                    latitude: lat,
-                    longitude: lng
-                }));
-            }
+    const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
+        const lat = place.geometry?.location?.lat();
+        const lng = place.geometry?.location?.lng();
+        if (lat && lng && place.formatted_address) {
+            setFormData(prev => ({
+                ...prev,
+                address: place.formatted_address || '',
+                latitude: lat,
+                longitude: lng
+            }));
         }
     };
 
@@ -167,20 +165,10 @@ const ProjectIntakeForm: React.FC = () => {
                                 <label className="block">
                                     <span className="text-sm font-semibold text-gray-700 px-1">Address</span>
                                     {isLoaded && (
-                                        <Autocomplete
-                                            onLoad={ref => autocompleteRef.current = ref}
-                                            onPlaceChanged={handlePlaceSelect}
-                                        >
-                                            <div className="relative mt-1">
-                                                <input
-                                                    type="text"
-                                                    placeholder="Search project address..."
-                                                    className="w-full px-5 py-4 pl-12 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-primary-100 focus:border-primary-500 outline-none transition-all"
-                                                    defaultValue={formData.address}
-                                                />
-                                                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                                            </div>
-                                        </Autocomplete>
+                                        <PlaceAutocomplete
+                                            onPlaceSelect={handlePlaceSelect}
+                                            className="w-full px-5 py-4 pl-12 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-primary-100 focus:border-primary-500 outline-none transition-all"
+                                        />
                                     )}
                                 </label>
                             </div>

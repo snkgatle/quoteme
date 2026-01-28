@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
+import { useJsApiLoader } from '@react-google-maps/api';
+import PlaceAutocomplete from './PlaceAutocomplete';
 import { motion } from 'framer-motion';
 import { Upload, Sparkles, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -72,19 +73,16 @@ const SPOnboardingForm: React.FC = () => {
         libraries
     });
 
-    const handlePlaceSelect = () => {
-        if (autocompleteRef.current !== null) {
-            const place = autocompleteRef.current.getPlace();
-            const lat = place.geometry?.location?.lat();
-            const lng = place.geometry?.location?.lng();
-            if (lat && lng) {
-                setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
-                if (place.formatted_address) {
-                    setAddressInput(place.formatted_address);
-                }
-            } else {
-                setFormData(prev => ({ ...prev, latitude: null, longitude: null }));
+    const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
+        const lat = place.geometry?.location?.lat();
+        const lng = place.geometry?.location?.lng();
+        if (lat && lng) {
+            setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
+            if (place.formatted_address) {
+                setAddressInput(place.formatted_address);
             }
+        } else {
+            setFormData(prev => ({ ...prev, latitude: null, longitude: null }));
         }
     };
 
@@ -246,21 +244,10 @@ const SPOnboardingForm: React.FC = () => {
                             Address (Google Maps Autocomplete)
                         </label>
                         {isLoaded && (
-                            <Autocomplete
-                                onLoad={(ref) => autocompleteRef.current = ref}
-                                onPlaceChanged={handlePlaceSelect}
-                            >
-                                <input
-                                    type="text"
-                                    placeholder="Search business address..."
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-                                    value={addressInput}
-                                    onChange={(e) => {
-                                        setAddressInput(e.target.value);
-                                        setFormData(prev => ({ ...prev, latitude: null, longitude: null }));
-                                    }}
-                                />
-                            </Autocomplete>
+                            <PlaceAutocomplete
+                                onPlaceSelect={handlePlaceSelect}
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                            />
                         )}
                     </div>
                 </ErrorBoundary>
