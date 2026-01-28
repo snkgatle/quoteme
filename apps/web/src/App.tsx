@@ -9,14 +9,18 @@ import SPLogin from './pages/SPLogin'
 import QuoteReview from './pages/QuoteReview'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthProvider } from './context/AuthContext'
+import { ToastProvider } from './context/ToastContext'
+import { ToastContainer } from './components/Toast'
 
 function App() {
     return (
         <AuthProvider>
-            <BrowserRouter>
-                <div className="min-h-screen bg-gray-50 flex flex-col">
-                    <Header />
-                    <main className="flex-1">
+            <ToastProvider>
+                <BrowserRouter>
+                    <div className="min-h-screen bg-gray-50 flex flex-col">
+                        <ToastContainer />
+                        <Header />
+                        <main className="flex-1">
                         <Routes>
                             <Route path="/" element={<Home />} />
                             <Route path="/request-quote" element={<div className="py-20 bg-gray-50"><ProjectIntakeForm /></div>} />
@@ -38,6 +42,7 @@ function App() {
                     <Footer />
                 </div>
             </BrowserRouter>
+            </ToastProvider>
         </AuthProvider>
     )
 }
