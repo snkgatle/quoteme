@@ -132,9 +132,8 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ project, onClose, onSubmitSuccess
                                         step="0.01"
                                         placeholder="0.00"
                                         {...register('amount', { valueAsNumber: true })}
-                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${
-                                            errors.amount ? 'border-red-300 focus:ring-red-200' : 'border-gray-300'
-                                        }`}
+                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${errors.amount ? 'border-red-300 focus:ring-red-200' : 'border-gray-300'
+                                            }`}
                                     />
                                 </div>
                                 {errors.amount && (
@@ -148,7 +147,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ project, onClose, onSubmitSuccess
                             <div>
                                 <label htmlFor="proposal" className="block text-sm font-medium text-gray-700 mb-1">Quote Details</label>
                                 <div className="relative">
-                                     <div className="absolute top-3 left-3 pointer-events-none">
+                                    <div className="absolute top-3 left-3 pointer-events-none">
                                         <FileText className="h-5 w-5 text-gray-400" />
                                     </div>
                                     <textarea
@@ -156,9 +155,8 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ project, onClose, onSubmitSuccess
                                         rows={5}
                                         placeholder="Breakdown of costs, terms, timeline..."
                                         {...register('proposal')}
-                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${
-                                            errors.proposal ? 'border-red-300 focus:ring-red-200' : 'border-gray-300'
-                                        }`}
+                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${errors.proposal ? 'border-red-300 focus:ring-red-200' : 'border-gray-300'
+                                            }`}
                                     />
                                 </div>
                                 {errors.proposal && (

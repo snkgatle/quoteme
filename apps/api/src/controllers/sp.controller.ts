@@ -4,6 +4,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import { calculateDistance } from '../lib/geo';
 import { generateBio as generateBioFromAI } from '../lib/gemini';
 import { uploadFile } from '../lib/storage';
+import { sanitizeText } from '../lib/sanitize';
 import { logger } from '../lib/logger';
 import { TRADES } from '../lib/constants';
 
@@ -16,7 +17,7 @@ export const generateBioContent = async (req: Request, res: Response) => {
     if (!notes) return res.status(400).json({ error: 'Notes are required' });
 
     try {
-        const bio = await generateBioFromAI({ notes });
+        const bio = await generateBioFromAI({ notes: sanitizeText(notes) });
         res.json({ bio });
     } catch (error) {
         console.error('Bio generation error:', error);
@@ -147,8 +148,8 @@ export const updateProfile = async (req: Request, res: Response) => {
             status: newStatus,
         };
 
-        if (businessName !== undefined) updateData.name = businessName;
-        if (bio !== undefined) updateData.bio = bio;
+        if (businessName !== undefined) updateData.name = sanitizeText(businessName);
+        if (bio !== undefined) updateData.bio = sanitizeText(bio);
         if (latitude !== undefined) updateData.latitude = parseFloat(latitude);
         if (longitude !== undefined) updateData.longitude = parseFloat(longitude);
         if (certificationUrl) updateData.certification_url = certificationUrl;
@@ -166,7 +167,7 @@ export const updateProfile = async (req: Request, res: Response) => {
             if (!Array.isArray(parsedServices)) {
                 parsedServices = [];
             }
-            updateData.trades = parsedServices;
+            updateData.trades = parsedServices.map((s: any) => sanitizeText(String(s)));
         }
 
         const updatedSP = await prisma.serviceProvider.update({
@@ -201,8 +202,8 @@ export const submitQuote = async (req: Request, res: Response) => {
                 requestId,
                 serviceProviderId: user.id,
                 amount: parseFloat(amount),
-                proposal,
-                trade,
+                proposal: sanitizeText(proposal),
+                trade: sanitizeText(trade),
                 status: 'PENDING'
             }
         });

@@ -86,14 +86,12 @@ const Inbox: React.FC<InboxProps> = ({ token }) => {
                     key={n.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`p-4 rounded-xl border transition-all ${
-                        n.isRead ? 'bg-white border-gray-100' : 'bg-blue-50 border-blue-100 shadow-sm'
-                    }`}
+                    className={`p-4 rounded-xl border transition-all ${n.isRead ? 'bg-white border-gray-100' : 'bg-blue-50 border-blue-100 shadow-sm'
+                        }`}
                 >
                     <div className="flex gap-4">
-                        <div className={`mt-1 p-2 rounded-full ${
-                            n.type === 'QUOTE_ACCEPTED' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'
-                        }`}>
+                        <div className={`mt-1 p-2 rounded-full ${n.type === 'QUOTE_ACCEPTED' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'
+                            }`}>
                             {n.type === 'QUOTE_ACCEPTED' ? <CheckCircle className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
                         </div>
                         <div className="flex-1">
