@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">QuoteMe</string>
+    <string name="title_activity_main">QuoteMe</string>
+    <string name="package_name">com.quoteme.app</string>
+    <string name="custom_url_scheme">com.quoteme.app</string>
+</resources>

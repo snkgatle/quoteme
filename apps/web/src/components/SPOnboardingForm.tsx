@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ProfilePreview from './ProfilePreview';
 import ErrorBoundary from './ErrorBoundary';
+import TermsAndConditionsModal from './TermsAndConditionsModal';
 
 const libraries: ("places")[] = ["places"];
 
@@ -21,6 +22,8 @@ const SPOnboardingForm: React.FC = () => {
         isQualified: false,
     });
 
+    const [showTerms, setShowTerms] = useState(false);
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [addressInput, setAddressInput] = useState('');
     const [isEnhancing, setIsEnhancing] = useState(false);
@@ -373,12 +376,28 @@ const SPOnboardingForm: React.FC = () => {
                     </div>
                 </ErrorBoundary>
 
+                <div className="flex items-center gap-2 mb-4">
+                    <input
+                        type="checkbox"
+                        id="terms"
+                        checked={acceptedTerms}
+                        onChange={(e) => setAcceptedTerms(e.target.checked)}
+                        className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500 cursor-pointer"
+                    />
+                    <label htmlFor="terms" className="text-sm text-gray-700 select-none">
+                        I agree to the <button type="button" onClick={() => setShowTerms(true)} className="text-primary-600 hover:underline font-medium">Terms and Conditions</button>
+                    </label>
+                </div>
+
                 <button
                     onClick={handleSubmit}
-                    className="w-full bg-primary-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-primary-700 transition-all hover:-translate-y-0.5">
+                    disabled={!acceptedTerms}
+                    className="w-full bg-primary-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-primary-700 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                     Complete Registration
                 </button>
             </div>
+
+            <TermsAndConditionsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
         </motion.div>
     );
 };
