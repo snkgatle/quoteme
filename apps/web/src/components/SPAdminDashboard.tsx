@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Briefcase, FileText, Settings, User, MapPin, EyeOff, Send, LogOut, CheckCircle, XCircle, Clock, Star, AlertTriangle, TrendingUp, Bell } from 'lucide-react';
+import { LayoutDashboard, Briefcase, FileText, Settings, User, MapPin, EyeOff, Send, LogOut, CheckCircle, XCircle, Clock, Star, AlertTriangle, TrendingUp, Bell, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Inbox from './Inbox';
 import SPSettings from './SPSettings';
+import SPPrivacySettings from './SPPrivacySettings';
 import QuoteForm from './QuoteForm';
 import { SkeletonList } from './SkeletonLoader';
 
@@ -278,6 +279,10 @@ const SPAdminDashboard: React.FC = () => {
             return <SPSettings />;
         }
 
+        if (activeTab === 'privacy') {
+            return <SPPrivacySettings />;
+        }
+
         if (activeTab === 'performance') {
             if (!performanceData) return <div className="p-10 text-center">Loading performance data...</div>;
 
@@ -391,6 +396,7 @@ const SPAdminDashboard: React.FC = () => {
                         { id: 'performance', label: 'Performance', icon: TrendingUp },
                         { id: 'profile', label: 'Profile', icon: User },
                         { id: 'settings', label: 'Settings', icon: Settings },
+                        { id: 'privacy', label: 'Privacy', icon: Shield },
                     ].map((item) => (
                         <button
                             key={item.id}
@@ -437,6 +443,7 @@ const SPAdminDashboard: React.FC = () => {
                             {activeTab === 'accepted' && 'Accepted Jobs'}
                             {activeTab === 'performance' && 'Performance Overview'}
                             {(activeTab === 'profile' || activeTab === 'settings') && 'Profile & Settings'}
+                            {activeTab === 'privacy' && 'Privacy Settings'}
                         </h1>
                         <p className="text-gray-500">
                             {activeTab === 'inbox' && 'View your notifications and alerts.'}
@@ -445,6 +452,7 @@ const SPAdminDashboard: React.FC = () => {
                             {activeTab === 'accepted' && 'Manage your ongoing and upcoming jobs.'}
                             {activeTab === 'performance' && 'Monitor your rating, wins, and customer feedback.'}
                             {(activeTab === 'profile' || activeTab === 'settings') && 'Manage your business profile and account settings.'}
+                            {activeTab === 'privacy' && 'View our data handling policy and privacy controls.'}
                         </p>
                     </div>
                     {activeTab === 'requests' && (
