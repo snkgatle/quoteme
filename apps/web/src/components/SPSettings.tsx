@@ -8,7 +8,7 @@ import ErrorBoundary from './ErrorBoundary';
 const libraries: ("places")[] = ["places"];
 
 const SPSettings: React.FC = () => {
-    const { user, token, login } = useAuth();
+    const { user, token, login, logout } = useAuth();
     const [formData, setFormData] = useState({
         businessName: '',
         services: [] as string[],
@@ -91,6 +91,12 @@ const SPSettings: React.FC = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ notes: formData.notes }),
             });
+
+            if (response.status === 401) {
+                logout();
+                return;
+            }
+
             const data = await response.json();
             setFormData(prev => ({ ...prev, bio: data.bio }));
         } catch (error) {
@@ -133,6 +139,11 @@ const SPSettings: React.FC = () => {
                 },
                 body: data,
             });
+
+            if (response.status === 401) {
+                logout();
+                return;
+            }
 
             const result = await response.json();
 

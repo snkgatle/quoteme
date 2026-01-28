@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, AlertCircle, DollarSign, FileText } from 'lucide-react';
+import { X, Send, AlertCircle, DollarSign, FileText, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface Project {
@@ -29,7 +29,7 @@ const schema = z.object({
 type QuoteFormData = z.infer<typeof schema>;
 
 const QuoteForm: React.FC<QuoteFormProps> = ({ project, onClose, onSubmitSuccess }) => {
-    const { token } = useAuth();
+    const { token, logout } = useAuth();
     const { register, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<QuoteFormData>({
         resolver: zodResolver(schema),
     });
@@ -49,6 +49,11 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ project, onClose, onSubmitSuccess
                     trade: project.requiredTrades[0] || 'General',
                 }),
             });
+
+            if (response.status === 401) {
+                logout();
+                return;
+            }
 
             if (!response.ok) {
                 const errorData = await response.json();
@@ -94,7 +99,14 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ project, onClose, onSubmitSuccess
                         <div className="mb-6 bg-blue-50 p-4 rounded-xl border border-blue-100">
                             <h3 className="text-sm font-bold text-blue-900 uppercase tracking-wide mb-1">Request Details</h3>
                             <p className="font-semibold text-gray-900 mb-1">{project.description}</p>
-                            <p className="text-xs text-blue-700">User: {project.user?.name || 'Anonymous User'}</p>
+                            <p className="text-xs text-blue-700 mb-3">User: {project.user?.name || 'Anonymous User'}</p>
+
+                            <div className="bg-white/50 p-2 rounded-lg border border-blue-200 flex items-start gap-2">
+                                <Shield className="w-4 h-4 text-slate-500 mt-0.5 shrink-0" />
+                                <p className="text-xs text-slate-600 leading-tight">
+                                    <strong>Data Masking:</strong> Customer contact details are hidden to protect privacy. Full details will be revealed upon quote acceptance.
+                                </p>
+                            </div>
                         </div>
 
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -120,9 +132,8 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ project, onClose, onSubmitSuccess
                                         step="0.01"
                                         placeholder="0.00"
                                         {...register('amount', { valueAsNumber: true })}
-                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${
-                                            errors.amount ? 'border-red-300 focus:ring-red-200' : 'border-gray-300'
-                                        }`}
+                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${errors.amount ? 'border-red-300 focus:ring-red-200' : 'border-gray-300'
+                                            }`}
                                     />
                                 </div>
                                 {errors.amount && (
@@ -136,7 +147,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ project, onClose, onSubmitSuccess
                             <div>
                                 <label htmlFor="proposal" className="block text-sm font-medium text-gray-700 mb-1">Quote Details</label>
                                 <div className="relative">
-                                     <div className="absolute top-3 left-3 pointer-events-none">
+                                    <div className="absolute top-3 left-3 pointer-events-none">
                                         <FileText className="h-5 w-5 text-gray-400" />
                                     </div>
                                     <textarea
@@ -144,9 +155,8 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ project, onClose, onSubmitSuccess
                                         rows={5}
                                         placeholder="Breakdown of costs, terms, timeline..."
                                         {...register('proposal')}
-                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${
-                                            errors.proposal ? 'border-red-300 focus:ring-red-200' : 'border-gray-300'
-                                        }`}
+                                        className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${errors.proposal ? 'border-red-300 focus:ring-red-200' : 'border-gray-300'
+                                            }`}
                                     />
                                 </div>
                                 {errors.proposal && (
