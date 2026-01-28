@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
+import { useJsApiLoader } from '@react-google-maps/api';
+import PlaceAutocomplete from './PlaceAutocomplete';
 import { motion } from 'framer-motion';
 import { Upload, Sparkles, MapPin, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -68,16 +69,13 @@ const SPSettings: React.FC = () => {
         fetchTrades();
     }, []);
 
-    const handlePlaceSelect = () => {
-        if (autocompleteRef.current !== null) {
-            const place = autocompleteRef.current.getPlace();
-            const lat = place.geometry?.location?.lat();
-            const lng = place.geometry?.location?.lng();
-            if (lat && lng) {
-                setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
-                if (place.formatted_address) {
-                    setAddressInput(place.formatted_address);
-                }
+    const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
+        const lat = place.geometry?.location?.lat();
+        const lng = place.geometry?.location?.lng();
+        if (lat && lng) {
+            setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
+            if (place.formatted_address) {
+                setAddressInput(place.formatted_address);
             }
         }
     };
@@ -216,22 +214,10 @@ const SPSettings: React.FC = () => {
                         </label>
                         <p className="text-xs text-gray-500 mb-2">Updating this will re-validate your coordinates.</p>
                         {isLoaded && (
-                            <Autocomplete
-                                onLoad={(ref) => autocompleteRef.current = ref}
-                                onPlaceChanged={handlePlaceSelect}
-                            >
-                                <input
-                                    type="text"
-                                    placeholder="Search business address..."
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-                                    value={addressInput}
-                                    onChange={(e) => {
-                                        setAddressInput(e.target.value);
-                                        // Reset lat/long if user clears/edits input manually to force selection?
-                                        // Ideally we wait for selection.
-                                    }}
-                                />
-                            </Autocomplete>
+                            <PlaceAutocomplete
+                                onPlaceSelect={handlePlaceSelect}
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                            />
                         )}
                         {formData.latitude && formData.longitude && (
                             <p className="mt-1 text-xs text-green-600 font-mono">
