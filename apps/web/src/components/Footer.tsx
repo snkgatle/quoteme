@@ -4,7 +4,7 @@ import { Instagram, Twitter, Linkedin, Facebook } from 'lucide-react';
 
 const Footer: React.FC = () => {
     return (
-        <footer className="bg-gray-900 text-white py-16 px-6">
+        <footer className="bg-[#0a1128] text-white py-16 px-6">
             <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
                 <div className="col-span-1 md:col-span-2">
                     <div className="flex items-center gap-3 mb-6">
@@ -36,16 +36,16 @@ const Footer: React.FC = () => {
                         <li><Link to="/request-quote" className="hover:text-primary-400 transition-colors">Request a Quote</Link></li>
                         <li><Link to="/onboard" className="hover:text-primary-400 transition-colors">Join as Provider</Link></li>
                         <li><Link to="/admin" className="hover:text-primary-400 transition-colors">SP Portal</Link></li>
-                        <li><a href="#" className="hover:text-primary-400 transition-colors">How it Works</a></li>
+                        <li><Link to="/how-it-works" className="hover:text-primary-400 transition-colors">How it Works</Link></li>
                     </ul>
                 </div>
 
                 <div>
                     <h4 className="text-sm font-bold uppercase tracking-widest mb-6 text-gray-500">Company</h4>
                     <ul className="space-y-4 text-gray-400 font-medium">
-                        <li><a href="#" className="hover:text-primary-400 transition-colors">Privacy Policy</a></li>
-                        <li><a href="#" className="hover:text-primary-400 transition-colors">Terms of Service</a></li>
-                        <li><a href="#" className="hover:text-primary-400 transition-colors">Contact Us</a></li>
+                        <li><Link to="/privacy-policy" className="hover:text-primary-400 transition-colors">Privacy Policy</Link></li>
+                        <li><Link to="/terms-of-service" className="hover:text-primary-400 transition-colors">Terms of Service</Link></li>
+                        <li><Link to="/contact" className="hover:text-primary-400 transition-colors">Contact Us</Link></li>
                         <li className="pt-4 border-t border-gray-800 mt-4">
                             <p className="text-xs text-gray-600">Built by</p>
                             <p className="text-lg font-black tracking-tight text-white">KEmpire</p>
