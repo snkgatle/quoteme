@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Bell, CheckCircle, Clock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface Notification {
     id: string;
@@ -18,6 +19,7 @@ interface InboxProps {
 const Inbox: React.FC<InboxProps> = ({ token }) => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
+    const { logout } = useAuth();
 
     useEffect(() => {
         if (token) {
@@ -31,6 +33,12 @@ const Inbox: React.FC<InboxProps> = ({ token }) => {
             const res = await fetch('/api/sp/notifications', {
                 headers: { Authorization: `Bearer ${token}` }
             });
+
+            if (res.status === 401) {
+                logout();
+                return;
+            }
+
             const data = await res.json();
             if (res.ok) {
                 setNotifications(data);
@@ -47,10 +55,14 @@ const Inbox: React.FC<InboxProps> = ({ token }) => {
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
 
         try {
-            await fetch(`/api/sp/notifications/${id}/read`, {
+            const res = await fetch(`/api/sp/notifications/${id}/read`, {
                 method: 'PATCH',
                 headers: { Authorization: `Bearer ${token}` }
             });
+
+            if (res.status === 401) {
+                logout();
+            }
         } catch (error) {
             console.error('Failed to mark as read', error);
         }
