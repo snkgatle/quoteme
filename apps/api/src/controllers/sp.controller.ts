@@ -4,13 +4,14 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import { calculateDistance } from '../lib/geo';
 import { generateBio as generateBioFromAI } from '../lib/gemini';
 import { uploadFile } from '../lib/storage';
+import { sanitizeText } from '../lib/sanitize';
 
 export const generateBioContent = async (req: Request, res: Response) => {
     const { notes } = req.body;
     if (!notes) return res.status(400).json({ error: 'Notes are required' });
 
     try {
-        const bio = await generateBioFromAI({ notes });
+        const bio = await generateBioFromAI({ notes: sanitizeText(notes) });
         res.json({ bio });
     } catch (error) {
         console.error('Bio generation error:', error);
@@ -154,11 +155,11 @@ export const updateProfile = async (req: Request, res: Response) => {
         }
 
         const updateData: any = {
-            name: businessName,
-            bio,
+            name: sanitizeText(businessName),
+            bio: sanitizeText(bio),
             latitude: lat,
             longitude: lon,
-            trades: parsedServices,
+            trades: parsedServices.map((s: any) => sanitizeText(String(s))),
             status: newStatus,
         };
 
@@ -195,8 +196,8 @@ export const submitQuote = async (req: Request, res: Response) => {
                 requestId,
                 serviceProviderId: user.id,
                 amount: parseFloat(amount),
-                proposal,
-                trade,
+                proposal: sanitizeText(proposal),
+                trade: sanitizeText(trade),
                 status: 'PENDING'
             }
         });
