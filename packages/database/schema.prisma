@@ -13,6 +13,7 @@ model User {
   name      String?
   phone     String?
   requests  QuoteRequest[]
+  reviews   Review[]
   createdAt DateTime @default(now())
 }
 
@@ -30,6 +31,8 @@ model ServiceProvider {
   rating      Float    @default(5.0)
   reviewCount Int      @default(0)
   quotes      Quote[]
+  reviews     Review[]
+  notifications Notification[]
   createdAt   DateTime @default(now())
 
   @@index([latitude, longitude])
@@ -54,7 +57,7 @@ model Quote {
   requestId         String
   request           QuoteRequest   @relation(fields: [requestId], references: [id])
   serviceProviderId String
-  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade)
   amount            Float
   trade             String?
   proposal          String         @db.Text
@@ -63,4 +66,28 @@ model Quote {
   createdAt         DateTime       @default(now())
 
   @@unique([requestId, serviceProviderId, trade])
+}
+
+model Review {
+  id                String          @id @default(cuid())
+  serviceProviderId String
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User            @relation(fields: [userId], references: [id])
+  rating            Int
+  comment           String?         @db.Text
+  createdAt         DateTime        @default(now())
+}
+
+model Notification {
+  id                String          @id @default(cuid())
+  serviceProviderId String
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade)
+  type              String
+  message           String
+  projectId         String?
+  isRead            Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+
+  @@unique([serviceProviderId, type, projectId])
 }

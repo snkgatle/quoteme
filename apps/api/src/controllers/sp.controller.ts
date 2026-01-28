@@ -5,6 +5,12 @@ import { calculateDistance } from '../lib/geo';
 import { generateBio as generateBioFromAI } from '../lib/gemini';
 import { uploadFile } from '../lib/storage';
 import { sanitizeText } from '../lib/sanitize';
+import { logger } from '../lib/logger';
+import { TRADES } from '../lib/constants';
+
+export const getAvailableTrades = async (req: Request, res: Response) => {
+    res.json({ trades: TRADES });
+};
 
 export const generateBioContent = async (req: Request, res: Response) => {
     const { notes } = req.body;
@@ -121,22 +127,6 @@ export const updateProfile = async (req: Request, res: Response) => {
     } = req.body;
 
     try {
-        let parsedServices = services;
-        if (typeof services === 'string') {
-            try {
-                parsedServices = JSON.parse(services);
-            } catch (e) {
-                parsedServices = [services];
-            }
-        }
-        // Ensure parsedServices is array
-        if (!Array.isArray(parsedServices)) {
-            parsedServices = [];
-        }
-
-        const lat = latitude ? parseFloat(latitude) : undefined;
-        const lon = longitude ? parseFloat(longitude) : undefined;
-
         const currentSP = await prisma.serviceProvider.findUnique({
             where: { id: user.id },
         });
@@ -155,16 +145,29 @@ export const updateProfile = async (req: Request, res: Response) => {
         }
 
         const updateData: any = {
-            name: sanitizeText(businessName),
-            bio: sanitizeText(bio),
-            latitude: lat,
-            longitude: lon,
-            trades: parsedServices.map((s: any) => sanitizeText(String(s))),
             status: newStatus,
         };
 
-        if (certificationUrl) {
-            updateData.certification_url = certificationUrl;
+        if (businessName !== undefined) updateData.name = sanitizeText(businessName);
+        if (bio !== undefined) updateData.bio = sanitizeText(bio);
+        if (latitude !== undefined) updateData.latitude = parseFloat(latitude);
+        if (longitude !== undefined) updateData.longitude = parseFloat(longitude);
+        if (certificationUrl) updateData.certification_url = certificationUrl;
+
+        if (services !== undefined) {
+            let parsedServices = services;
+            if (typeof services === 'string') {
+                try {
+                    parsedServices = JSON.parse(services);
+                } catch (e) {
+                    parsedServices = [services];
+                }
+            }
+            // Ensure parsedServices is array
+            if (!Array.isArray(parsedServices)) {
+                parsedServices = [];
+            }
+            updateData.trades = parsedServices.map((s: any) => sanitizeText(String(s)));
         }
 
         const updatedSP = await prisma.serviceProvider.update({
@@ -186,7 +189,10 @@ export const submitQuote = async (req: Request, res: Response) => {
 
     const { requestId, amount, proposal, trade } = req.body;
 
+    logger.info('Quote submission attempt', { serviceProviderId: user.id, requestId });
+
     if (!requestId || !amount || !proposal) {
+        logger.warn('Quote submission missing fields', { serviceProviderId: user.id, body: req.body });
         return res.status(400).json({ error: 'Request ID, amount, and proposal are required.' });
     }
 
@@ -202,12 +208,76 @@ export const submitQuote = async (req: Request, res: Response) => {
             }
         });
 
+        logger.info('Quote submitted successfully', { quoteId: quote.id });
         res.status(201).json({ message: 'Quote submitted successfully', quote });
     } catch (error: any) {
         if (error.code === 'P2002') { // Prisma unique constraint violation code
-             return res.status(409).json({ error: 'You have already submitted a quote for this request.' });
+            logger.warn('Duplicate quote submission attempt', { serviceProviderId: user.id, requestId });
+            return res.status(409).json({ error: 'You have already submitted a quote for this request.' });
         }
-        console.error('Submit quote error:', error);
+        if (error.code === 'P2003') { // Prisma foreign key constraint violation code
+            return res.status(404).json({ error: 'Project not found.' });
+        }
+        logger.error('Submit quote error', { error, serviceProviderId: user.id, requestId });
         res.status(500).json({ error: 'Failed to submit quote' });
+    }
+};
+
+export const deleteAccount = async (req: Request, res: Response) => {
+    const user = (req as AuthRequest).user;
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+        await prisma.serviceProvider.delete({
+            where: { id: user.id },
+        });
+
+        res.json({ message: 'Account deleted successfully' });
+    } catch (error) {
+        console.error('Delete account error:', error);
+        res.status(500).json({ error: 'Failed to delete account' });
+    }
+};
+
+export const getPerformance = async (req: Request, res: Response) => {
+    const user = (req as AuthRequest).user;
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+        const sp = await prisma.serviceProvider.findUnique({
+            where: { id: user.id },
+            include: {
+                reviews: {
+                    orderBy: { createdAt: 'desc' },
+                    select: {
+                        id: true,
+                        rating: true,
+                        comment: true,
+                        createdAt: true
+                    }
+                },
+                quotes: {
+                    where: { isSelected: true },
+                    select: { id: true }
+                }
+            }
+        });
+
+        // Cast to any to bypass stale types in the database package if needed
+        const spInfo = sp as any;
+
+        if (!spInfo) return res.status(404).json({ error: 'Service Provider not found' });
+
+        const projectWins = spInfo.quotes.length;
+
+        res.json({
+            rating: spInfo.rating,
+            reviewCount: spInfo.reviewCount,
+            projectWins,
+            reviews: spInfo.reviews
+        });
+    } catch (error) {
+        console.error('Get performance error:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 };

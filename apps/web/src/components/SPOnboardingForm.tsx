@@ -5,6 +5,7 @@ import { Upload, Sparkles, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ProfilePreview from './ProfilePreview';
+import ErrorBoundary from './ErrorBoundary';
 
 const libraries: ("places")[] = ["places"];
 
@@ -23,6 +24,7 @@ const SPOnboardingForm: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
     const [addressInput, setAddressInput] = useState('');
     const [isEnhancing, setIsEnhancing] = useState(false);
+    const [availableServices, setAvailableServices] = useState<string[]>([]);
     const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
     const { token, login, user } = useAuth();
     const navigate = useNavigate();
@@ -39,6 +41,23 @@ const SPOnboardingForm: React.FC = () => {
             }));
         }
     }, [user]);
+
+    useEffect(() => {
+        const fetchTrades = async () => {
+            try {
+                const response = await fetch('/api/sp/available-trades');
+                const data = await response.json();
+                if (data.trades) {
+                    setAvailableServices(data.trades);
+                }
+            } catch (error) {
+                console.error('Failed to fetch trades', error);
+                // Fallback to minimal list if API fails
+                setAvailableServices(["Plumbing", "Electrical", "Carpenter", "Painting", "Roofing", "Landscaping"]);
+            }
+        };
+        fetchTrades();
+    }, []);
 
     // Fields for unauthenticated registration
     const [email, setEmail] = useState('');
@@ -147,7 +166,7 @@ const SPOnboardingForm: React.FC = () => {
             }
 
             const response = await fetch('/api/sp/profile', {
-                method: 'PUT',
+                method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${currentToken}`
                 },
@@ -165,7 +184,6 @@ const SPOnboardingForm: React.FC = () => {
         }
     };
 
-    const availableServices = ["Plumbing", "Electrical", "Carpentry", "Painting", "Roofing", "Landscaping"];
 
     return (
         <motion.div
@@ -178,168 +196,182 @@ const SPOnboardingForm: React.FC = () => {
             <div className="space-y-6">
 
                 {/* Registration Info (if not logged in) */}
-                {!token && (
-                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-4">
-                        <h3 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Account Details</h3>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                            <input
-                                type="email"
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
+                <ErrorBoundary>
+                    {!token && (
+                        <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-4">
+                            <h3 className="text-sm font-bold text-blue-800 uppercase tracking-wide">Account Details</h3>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                <input
+                                    type="email"
+                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Create Password</label>
+                                <input
+                                    type="password"
+                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Create Password</label>
-                            <input
-                                type="password"
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                )}
+                    )}
+                </ErrorBoundary>
 
                 {/* Business Info */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
-                    <input
-                        type="text"
-                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-                        value={formData.businessName}
-                        onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                    />
-                </div>
+                <ErrorBoundary>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
+                        <input
+                            type="text"
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                            value={formData.businessName}
+                            onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                        />
+                    </div>
+                </ErrorBoundary>
 
                 {/* Location with Google Maps */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        <MapPin className="inline w-4 h-4 mr-1 text-primary-500" />
-                        Address (Google Maps Autocomplete)
-                    </label>
-                    {isLoaded && (
-                        <Autocomplete
-                            onLoad={(ref) => autocompleteRef.current = ref}
-                            onPlaceChanged={handlePlaceSelect}
-                        >
-                            <input
-                                type="text"
-                                placeholder="Search business address..."
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-                                value={addressInput}
-                                onChange={(e) => {
-                                    setAddressInput(e.target.value);
-                                    setFormData(prev => ({ ...prev, latitude: null, longitude: null }));
-                                }}
-                            />
-                        </Autocomplete>
-                    )}
-                </div>
+                <ErrorBoundary fallback={<div className="p-4 bg-red-50 text-red-700 rounded-lg">Location search unavailable</div>}>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <MapPin className="inline w-4 h-4 mr-1 text-primary-500" />
+                            Address (Google Maps Autocomplete)
+                        </label>
+                        {isLoaded && (
+                            <Autocomplete
+                                onLoad={(ref) => autocompleteRef.current = ref}
+                                onPlaceChanged={handlePlaceSelect}
+                            >
+                                <input
+                                    type="text"
+                                    placeholder="Search business address..."
+                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                    value={addressInput}
+                                    onChange={(e) => {
+                                        setAddressInput(e.target.value);
+                                        setFormData(prev => ({ ...prev, latitude: null, longitude: null }));
+                                    }}
+                                />
+                            </Autocomplete>
+                        )}
+                    </div>
+                </ErrorBoundary>
 
                 {/* Multi-select Services */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Services Provided</label>
-                    <div className="flex flex-wrap gap-2">
-                        {availableServices.map(service => (
-                            <button
-                                key={service}
-                                onClick={() => {
-                                    const current = formData.services.includes(service)
-                                        ? formData.services.filter(s => s !== service)
-                                        : [...formData.services, service];
-                                    setFormData({ ...formData, services: current });
-                                }}
-                                className={`px-3 py-1 rounded-full text-sm border transition-colors ${formData.services.includes(service)
-                                    ? 'bg-primary-500 text-white border-primary-500'
-                                    : 'bg-white text-gray-600 border-gray-200 hover:border-primary-500'
-                                    }`}
-                            >
-                                {service}
-                            </button>
-                        ))}
+                <ErrorBoundary>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Services Provided</label>
+                        <div className="flex flex-wrap gap-2">
+                            {availableServices.map(service => (
+                                <button
+                                    key={service}
+                                    onClick={() => {
+                                        const current = formData.services.includes(service)
+                                            ? formData.services.filter(s => s !== service)
+                                            : [...formData.services, service];
+                                        setFormData({ ...formData, services: current });
+                                    }}
+                                    className={`px-3 py-1 rounded-full text-sm border transition-colors ${formData.services.includes(service)
+                                        ? 'bg-primary-500 text-white border-primary-500'
+                                        : 'bg-white text-gray-600 border-gray-200 hover:border-primary-500'
+                                        }`}
+                                >
+                                    {service}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                </div>
+                </ErrorBoundary>
 
                 {/* AI Bio Section */}
-                <div className="bg-primary-50 p-4 rounded-xl border border-primary-100">
-                    <label className="block text-sm font-medium text-primary-900 mb-2">
-                        <Sparkles className="inline w-4 h-4 mr-1 text-primary-600" />
-                        AI Assistant (Rough Notes)
-                    </label>
-                    <textarea
-                        className="w-full px-4 py-2 border border-primary-200 rounded-lg h-24 focus:ring-2 focus:ring-primary-500 outline-none"
-                        placeholder="Type some rough notes about your experience and skills..."
-                        value={formData.notes}
-                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    />
-                    <button
-                        onClick={enhanceBio}
-                        disabled={isEnhancing || !formData.notes}
-                        className="mt-2 text-sm font-semibold text-primary-700 hover:text-primary-800 disabled:opacity-50"
-                    >
-                        {isEnhancing ? 'Enhancing...' : 'Enhance with AI ✨'}
-                    </button>
+                <ErrorBoundary fallback={<div className="p-4 bg-red-50 text-red-700 rounded-lg">AI Assistant unavailable</div>}>
+                    <div className="bg-primary-50 p-4 rounded-xl border border-primary-100">
+                        <label className="block text-sm font-medium text-primary-900 mb-2">
+                            <Sparkles className="inline w-4 h-4 mr-1 text-primary-600" />
+                            AI Assistant (Rough Notes)
+                        </label>
+                        <textarea
+                            className="w-full px-4 py-2 border border-primary-200 rounded-lg h-24 focus:ring-2 focus:ring-primary-500 outline-none"
+                            placeholder="Type some rough notes about your experience and skills..."
+                            value={formData.notes}
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        />
+                        <button
+                            onClick={enhanceBio}
+                            disabled={isEnhancing || !formData.notes}
+                            className="mt-2 text-sm font-semibold text-primary-700 hover:text-primary-800 disabled:opacity-50"
+                        >
+                            {isEnhancing ? 'Enhancing...' : 'Enhance with AI ✨'}
+                        </button>
 
-                    {formData.bio && (
-                        <div className="mt-4 p-4 bg-white rounded-lg border border-primary-200 shadow-sm">
-                            <div className="flex justify-between items-center mb-2">
-                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Review & Edit Bio</h4>
-                                <span className={`text-xs ${formData.bio.length > 300 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
-                                    {formData.bio.length}/300
-                                </span>
+                        {formData.bio && (
+                            <div className="mt-4 p-4 bg-white rounded-lg border border-primary-200 shadow-sm">
+                                <div className="flex justify-between items-center mb-2">
+                                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Review & Edit Bio</h4>
+                                    <span className={`text-xs ${formData.bio.length > 300 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
+                                        {formData.bio.length}/300
+                                    </span>
+                                </div>
+                                <textarea
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg h-32 focus:ring-2 focus:ring-primary-500 outline-none text-sm leading-relaxed"
+                                    value={formData.bio}
+                                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                                    maxLength={300}
+                                />
                             </div>
-                            <textarea
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg h-32 focus:ring-2 focus:ring-primary-500 outline-none text-sm leading-relaxed"
-                                value={formData.bio}
-                                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                                maxLength={300}
-                            />
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
+                </ErrorBoundary>
 
                 {/* Certification Upload */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Certifications & Licenses</label>
-                    <div className="relative group">
-                        <input
-                            type="file"
-                            className="hidden"
-                            id="cert-upload"
-                            onChange={handleFileUpload}
-                        />
-                        <label
-                            htmlFor="cert-upload"
-                            className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-6 cursor-pointer group-hover:border-primary-500 transition-colors"
-                        >
-                            <div className="text-center">
-                                <Upload className="mx-auto h-8 w-8 text-gray-400 group-hover:text-primary-500 mb-2" />
-                                <span className="text-sm text-gray-600">Click to upload certification</span>
-                            </div>
-                        </label>
+                <ErrorBoundary>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Certifications & Licenses</label>
+                        <div className="relative group">
+                            <input
+                                type="file"
+                                className="hidden"
+                                id="cert-upload"
+                                onChange={handleFileUpload}
+                            />
+                            <label
+                                htmlFor="cert-upload"
+                                className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-6 cursor-pointer group-hover:border-primary-500 transition-colors"
+                            >
+                                <div className="text-center">
+                                    <Upload className="mx-auto h-8 w-8 text-gray-400 group-hover:text-primary-500 mb-2" />
+                                    <span className="text-sm text-gray-600">Click to upload certification</span>
+                                </div>
+                            </label>
+                        </div>
+                        {formData.isQualified && (
+                            <p className="mt-2 text-xs font-bold text-green-600 flex items-center">
+                                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                                Verified: Qualified Service Provider
+                            </p>
+                        )}
                     </div>
-                    {formData.isQualified && (
-                        <p className="mt-2 text-xs font-bold text-green-600 flex items-center">
-                            <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                            Verified: Qualified Service Provider
-                        </p>
-                    )}
-                </div>
+                </ErrorBoundary>
 
                 {/* Profile Preview */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Profile Preview</label>
-                    <ProfilePreview
-                        businessName={formData.businessName}
-                        bio={formData.bio || formData.notes}
-                        services={formData.services}
-                        latitude={formData.latitude}
-                        longitude={formData.longitude}
-                        isLoaded={isLoaded}
-                    />
-                </div>
+                <ErrorBoundary fallback={<div className="p-4 bg-red-50 text-red-700 rounded-lg">Preview unavailable</div>}>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Profile Preview</label>
+                        <ProfilePreview
+                            businessName={formData.businessName}
+                            bio={formData.bio || formData.notes}
+                            services={formData.services}
+                            latitude={formData.latitude}
+                            longitude={formData.longitude}
+                            isLoaded={isLoaded}
+                        />
+                    </div>
+                </ErrorBoundary>
 
                 <button
                     onClick={handleSubmit}
