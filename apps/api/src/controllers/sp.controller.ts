@@ -8,6 +8,25 @@ import { sanitizeText } from '../lib/sanitize';
 import { logger } from '../lib/logger';
 import { TRADES } from '../lib/constants';
 
+interface MinimalQuoteRequest {
+    latitude: number | null;
+    longitude: number | null;
+    requiredTrades: string[];
+    user: any;
+    [key: string]: any;
+}
+
+interface MinimalQuote {
+    requestId: string;
+    status: string;
+    request: {
+        status: string;
+        user: any;
+        [key: string]: any;
+    };
+    [key: string]: any;
+}
+
 export const getAvailableTrades = async (req: Request, res: Response) => {
     res.json({ trades: TRADES });
 };
@@ -38,7 +57,27 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
         if (!sp) return res.status(404).json({ error: 'Service Provider not found' });
 
         const { latitude: spLat, longitude: spLon, trades: spTrades, quotes: spQuotes } = sp;
-        const quotedRequestIds = spQuotes.map(q => q.requestId);
+
+        // Ensure location is valid
+        if (typeof spLat !== 'number' || typeof spLon !== 'number') {
+             // If location is missing/invalid, return empty lists as we can't filter by distance
+             return res.json({
+                 newRequests: [],
+                 sentQuotes: [], // Should we return sent quotes? Probably yes, they are already sent.
+                 acceptedJobs: []
+             });
+        }
+
+        const quotedRequestIds = spQuotes.map((q: { requestId: string }) => q.requestId);
+
+        // Calculate bounding box for 50km radius
+        const latDelta = 50 / 111;
+        const lonDelta = 50 / (111 * Math.cos(spLat * (Math.PI / 180)));
+
+        const minLat = spLat - latDelta;
+        const maxLat = spLat + latDelta;
+        const minLon = spLon - lonDelta;
+        const maxLon = spLon + lonDelta;
 
         // 1. New Requests (Masked)
         const pendingProjects = await prisma.quoteRequest.findMany({
@@ -46,6 +85,17 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
                 status: 'PENDING',
                 NOT: {
                     id: { in: quotedRequestIds }
+                },
+                requiredTrades: {
+                    hasSome: spTrades
+                },
+                latitude: {
+                    gte: minLat,
+                    lte: maxLat
+                },
+                longitude: {
+                    gte: minLon,
+                    lte: maxLon
                 }
             },
             include: {
@@ -53,14 +103,12 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
             }
         });
 
-        const newRequests = pendingProjects.filter(project => {
-            if (!spLat || !spLon || !project.latitude || !project.longitude) return false;
+        const newRequests = pendingProjects.filter((project: MinimalQuoteRequest) => {
+            if (project.latitude === null || project.longitude === null) return false;
             const dist = calculateDistance(spLat, spLon, project.latitude, project.longitude);
             if (dist > 50) return false;
-
-            const hasMatchingTrade = project.requiredTrades.some(trade => spTrades.includes(trade));
-            return hasMatchingTrade;
-        }).map(project => ({
+            return true;
+        }).map((project: MinimalQuoteRequest) => ({
             ...project,
             user: {
                 name: 'Anonymous User',
@@ -83,7 +131,7 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
             }
         });
 
-        const formattedSentQuotes = sentQuotes.map(quote => {
+        const formattedSentQuotes = sentQuotes.map((quote: MinimalQuote) => {
             let statusBadge = 'Pending';
             if (quote.status === 'ACCEPTED') statusBadge = 'Awarded';
             else if (quote.status === 'REJECTED') statusBadge = 'Lost';
@@ -100,7 +148,7 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
         });
 
         // 3. Accepted Jobs
-        const acceptedJobs = formattedSentQuotes.filter(q => q.statusBadge === 'Awarded');
+        const acceptedJobs = formattedSentQuotes.filter((q: { statusBadge: string }) => q.statusBadge === 'Awarded');
 
         res.json({
             newRequests,
