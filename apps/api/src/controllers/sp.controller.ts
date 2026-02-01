@@ -38,7 +38,7 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
         if (!sp) return res.status(404).json({ error: 'Service Provider not found' });
 
         const { latitude: spLat, longitude: spLon, trades: spTrades, quotes: spQuotes } = sp;
-        const quotedRequestIds = spQuotes.map(q => q.requestId);
+        const quotedRequestIds = spQuotes.map((q: any) => q.requestId);
 
         // 1. New Requests (Masked)
         const pendingProjects = await prisma.quoteRequest.findMany({
@@ -53,14 +53,14 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
             }
         });
 
-        const newRequests = pendingProjects.filter(project => {
+        const newRequests = pendingProjects.filter((project: any) => {
             if (!spLat || !spLon || !project.latitude || !project.longitude) return false;
             const dist = calculateDistance(spLat, spLon, project.latitude, project.longitude);
             if (dist > 50) return false;
 
-            const hasMatchingTrade = project.requiredTrades.some(trade => spTrades.includes(trade));
+            const hasMatchingTrade = project.requiredTrades.some((trade: any) => spTrades.includes(trade));
             return hasMatchingTrade;
-        }).map(project => ({
+        }).map((project: any) => ({
             ...project,
             user: {
                 name: 'Anonymous User',
@@ -83,7 +83,7 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
             }
         });
 
-        const formattedSentQuotes = sentQuotes.map(quote => {
+        const formattedSentQuotes = sentQuotes.map((quote: any) => {
             let statusBadge = 'Pending';
             if (quote.status === 'ACCEPTED') statusBadge = 'Awarded';
             else if (quote.status === 'REJECTED') statusBadge = 'Lost';
@@ -100,7 +100,7 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
         });
 
         // 3. Accepted Jobs
-        const acceptedJobs = formattedSentQuotes.filter(q => q.statusBadge === 'Awarded');
+        const acceptedJobs = formattedSentQuotes.filter((q: any) => q.statusBadge === 'Awarded');
 
         res.json({
             newRequests,
