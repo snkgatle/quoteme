@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
 import { TRADES } from './constants';
+import { extractJsonArray } from './json-extractor';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -30,11 +31,9 @@ export async function extractTrades(description: string): Promise<string[]> {
         const response = await result.response;
         const text = response.text();
 
-        // Basic extraction logic for JSON from Gemini output
-        const jsonMatch = text.match(/\[.*\]/s);
-        if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            const validation = TradeSchema.safeParse(parsed);
+        const extracted = extractJsonArray(text);
+        if (extracted) {
+            const validation = TradeSchema.safeParse(extracted);
 
             if (validation.success) {
                 return validation.data;
