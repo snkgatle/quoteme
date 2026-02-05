@@ -74,24 +74,20 @@ export async function aggregateQuotesForProject(projectId: string) {
         });
 
         // Trigger Notifications for Selected Service Providers
-        for (const quote of selectedQuotes) {
+        if (selectedQuotes.length > 0) {
             const userContact = project.user ? `${project.user.name} (${project.user.phone}, ${project.user.email})` : 'Contact info unavailable';
 
-            try {
-                await prisma.notification.create({
-                    data: {
-                        serviceProviderId: quote.serviceProviderId,
-                        type: 'QUOTE_ACCEPTED',
-                        message: `Your quote for project matching ${quote.trade || 'General'} has been accepted! User Contact: ${userContact}`,
-                        projectId: project.id
-                    }
-                });
-            } catch (error: any) {
-                // Ignore unique constraint violations
-                if (error.code !== 'P2002') {
-                    throw error;
-                }
-            }
+            const notifications = selectedQuotes.map((quote: any) => ({
+                serviceProviderId: quote.serviceProviderId,
+                type: 'QUOTE_ACCEPTED',
+                message: `Your quote for project matching ${quote.trade || 'General'} has been accepted! User Contact: ${userContact}`,
+                projectId: project.id
+            }));
+
+            await prisma.notification.createMany({
+                data: notifications,
+                skipDuplicates: true
+            });
         }
     }
 
