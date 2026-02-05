@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { prisma } from '@quoteme/database';
+import { prisma, QuoteRequest, Quote } from '@quoteme/database';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { calculateDistance } from '../lib/geo';
 
@@ -50,32 +50,18 @@ export const getNotifications = async (req: Request, res: Response) => {
         });
 
         // Create notifications if they don't exist
-        for (const project of matchedProjects) {
-            const exists = await prisma.notification.findFirst({
-                where: {
-                    serviceProviderId: sp.id,
-                    type: 'CLOSING_SOON',
-                    projectId: project.id
-                }
-            });
+        const notificationsData = matchedProjects.map((project: QuoteRequest) => ({
+            serviceProviderId: sp.id,
+            type: 'CLOSING_SOON',
+            message: `Project matching ${project.requiredTrades.join(', ')} is closing soon!`,
+            projectId: project.id
+        }));
 
-            if (!exists) {
-                try {
-                    await prisma.notification.create({
-                        data: {
-                            serviceProviderId: sp.id,
-                            type: 'CLOSING_SOON',
-                            message: `Project matching ${project.requiredTrades.join(', ')} is closing soon!`,
-                            projectId: project.id
-                        }
-                    });
-                } catch (error: any) {
-                    // Ignore unique constraint violations (race conditions)
-                    if (error.code !== 'P2002') {
-                        throw error;
-                    }
-                }
-            }
+        if (notificationsData.length > 0) {
+            await prisma.notification.createMany({
+                data: notificationsData,
+                skipDuplicates: true
+            });
         }
 
         // Fetch all notifications
