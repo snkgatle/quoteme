@@ -48,6 +48,8 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
     const user = (req as AuthRequest).user;
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
+    const view = req.query.view as string | undefined;
+
     try {
         const sp = await prisma.serviceProvider.findUnique({
             where: { id: user.id },
@@ -58,97 +60,101 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
 
         const { latitude: spLat, longitude: spLon, trades: spTrades, quotes: spQuotes } = sp;
 
-        // Ensure location is valid
-        if (typeof spLat !== 'number' || typeof spLon !== 'number') {
-            // If location is missing/invalid, return empty lists as we can't filter by distance
-            return res.json({
-                newRequests: [],
-                sentQuotes: [], // Should we return sent quotes? Probably yes, they are already sent.
-                acceptedJobs: []
-            });
-        }
-
-        const quotedRequestIds = spQuotes.map((q: { requestId: string }) => q.requestId);
-
-        // Calculate bounding box for 50km radius
-        const latDelta = 50 / 111;
-        const lonDelta = 50 / (111 * Math.cos(spLat * (Math.PI / 180)));
-
-        const minLat = spLat - latDelta;
-        const maxLat = spLat + latDelta;
-        const minLon = spLon - lonDelta;
-        const maxLon = spLon + lonDelta;
+        let newRequests: any[] = [];
+        let formattedSentQuotes: any[] = [];
+        let acceptedJobs: any[] = [];
 
         // 1. New Requests (Masked)
-        const pendingProjects = await prisma.quoteRequest.findMany({
-            where: {
-                status: 'PENDING',
-                NOT: {
-                    id: { in: quotedRequestIds }
-                },
-                requiredTrades: {
-                    hasSome: spTrades
-                },
-                latitude: {
-                    gte: minLat,
-                    lte: maxLat
-                },
-                longitude: {
-                    gte: minLon,
-                    lte: maxLon
-                }
-            },
-            include: {
-                user: true
-            }
-        });
+        if (!view || view === 'requests') {
+            // Ensure location is valid
+            if (typeof spLat === 'number' && typeof spLon === 'number') {
+                const quotedRequestIds = spQuotes.map((q: { requestId: string }) => q.requestId);
 
-        const newRequests = pendingProjects.filter((project: MinimalQuoteRequest) => {
-            if (project.latitude === null || project.longitude === null) return false;
-            const dist = calculateDistance(spLat, spLon, project.latitude, project.longitude);
-            if (dist > 50) return false;
-            return true;
-        }).map((project: MinimalQuoteRequest) => ({
-            ...project,
-            user: {
-                name: 'Anonymous User',
-                email: 'masked',
-                phone: 'masked'
-            }
-        }));
+                // Calculate bounding box for 50km radius
+                const latDelta = 50 / 111;
+                const lonDelta = 50 / (111 * Math.cos(spLat * (Math.PI / 180)));
 
-        // 2. Sent Quotes
-        const sentQuotes = await prisma.quote.findMany({
-            where: {
-                serviceProviderId: sp.id
-            },
-            include: {
-                request: {
+                const minLat = spLat - latDelta;
+                const maxLat = spLat + latDelta;
+                const minLon = spLon - lonDelta;
+                const maxLon = spLon + lonDelta;
+
+                const pendingProjects = await prisma.quoteRequest.findMany({
+                    where: {
+                        status: 'PENDING',
+                        NOT: {
+                            id: { in: quotedRequestIds }
+                        },
+                        requiredTrades: {
+                            hasSome: spTrades
+                        },
+                        latitude: {
+                            gte: minLat,
+                            lte: maxLat
+                        },
+                        longitude: {
+                            gte: minLon,
+                            lte: maxLon
+                        }
+                    },
                     include: {
                         user: true
                     }
-                }
+                });
+
+                newRequests = pendingProjects.filter((project: MinimalQuoteRequest) => {
+                    if (project.latitude === null || project.longitude === null) return false;
+                    const dist = calculateDistance(spLat, spLon, project.latitude, project.longitude);
+                    if (dist > 50) return false;
+                    return true;
+                }).map((project: MinimalQuoteRequest) => ({
+                    ...project,
+                    user: {
+                        name: 'Anonymous User',
+                        email: 'masked',
+                        phone: 'masked'
+                    }
+                }));
             }
-        });
+        }
 
-        const formattedSentQuotes = sentQuotes.map((quote: MinimalQuote) => {
-            let statusBadge = 'Pending';
-            if (quote.status === 'ACCEPTED') statusBadge = 'Awarded';
-            else if (quote.status === 'REJECTED') statusBadge = 'Lost';
-            else if (quote.request.status !== 'PENDING' && quote.status === 'PENDING') statusBadge = 'Lost';
+        // 2. Sent Quotes & Accepted Jobs
+        if (!view || view === 'quotes' || view === 'accepted') {
+            const quoteWhere: any = { serviceProviderId: sp.id };
+            if (view === 'accepted') {
+                quoteWhere.status = 'ACCEPTED';
+            }
 
-            return {
-                ...quote,
-                statusBadge,
-                request: {
-                    ...quote.request,
-                    user: quote.status === 'ACCEPTED' ? quote.request.user : { name: 'Anonymous User' }
+            const sentQuotes = await prisma.quote.findMany({
+                where: quoteWhere,
+                include: {
+                    request: {
+                        include: {
+                            user: true
+                        }
+                    }
                 }
-            };
-        });
+            });
 
-        // 3. Accepted Jobs
-        const acceptedJobs = formattedSentQuotes.filter((q: { statusBadge: string }) => q.statusBadge === 'Awarded');
+            formattedSentQuotes = sentQuotes.map((quote: MinimalQuote) => {
+                let statusBadge = 'Pending';
+                if (quote.status === 'ACCEPTED') statusBadge = 'Awarded';
+                else if (quote.status === 'REJECTED') statusBadge = 'Lost';
+                else if (quote.request.status !== 'PENDING' && quote.status === 'PENDING') statusBadge = 'Lost';
+
+                return {
+                    ...quote,
+                    statusBadge,
+                    request: {
+                        ...quote.request,
+                        user: quote.status === 'ACCEPTED' ? quote.request.user : { name: 'Anonymous User' }
+                    }
+                };
+            });
+
+            // 3. Accepted Jobs
+            acceptedJobs = formattedSentQuotes.filter((q: { statusBadge: string }) => q.statusBadge === 'Awarded');
+        }
 
         res.json({
             newRequests,
