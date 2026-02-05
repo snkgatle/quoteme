@@ -32,9 +32,9 @@ export const getNotifications = async (req: Request, res: Response) => {
         });
 
         // Filter for matching projects
-        const matchedProjects = closingSoonProjects.filter((project: QuoteRequest) => {
+        const matchedProjects = closingSoonProjects.filter((project: any) => {
             // Check trades
-            const hasMatchingTrade = project.requiredTrades.some((trade: string) => sp.trades.includes(trade));
+            const hasMatchingTrade = project.requiredTrades.some((trade: any) => sp.trades.includes(trade));
             if (!hasMatchingTrade) return false;
 
             // Check distance
@@ -43,7 +43,7 @@ export const getNotifications = async (req: Request, res: Response) => {
             if (dist > 50) return false;
 
             // Check if already quoted
-            const hasQuoted = sp.quotes.some((q: Quote) => q.requestId === project.id);
+            const hasQuoted = sp.quotes.some((q: any) => q.requestId === project.id);
             if (hasQuoted) return false;
 
             return true;
