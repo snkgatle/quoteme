@@ -75,4 +75,4 @@ jobs:
           image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/quoteme-api:${{ github.sha }}
           region: us-central1
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          flags: '--allow-unauthenticated'
+          flags: '--service-account=${{ secrets.GCP_SERVICE_ACCOUNT }} --allow-unauthenticated --memory 1024Mi'
