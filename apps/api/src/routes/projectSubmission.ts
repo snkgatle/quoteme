@@ -17,9 +17,9 @@ router.post('/', async (req: Request, res: Response) => {
             descriptionLength: description?.length
         });
 
-        if (!latitude || !longitude || !description) {
+        if (!userEmail || !latitude || !longitude || !description) {
             logger.warn('Project submission missing required fields', { body: req.body });
-            return res.status(400).json({ error: 'Latitude, longitude, and description are required.' });
+            return res.status(400).json({ error: 'Email, Latitude, longitude, and description are required.' });
         }
 
         // 1 & 2. Extract trades and Upsert user concurrently

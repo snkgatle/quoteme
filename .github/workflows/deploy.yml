@@ -1,0 +1,75 @@
+name: Deploy to GCP
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-web:
+    name: Deploy Web to App Engine
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Web
+        run: npm run build -w apps/web
+
+      - name: Auth GCP
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+
+      - name: Deploy to App Engine
+        uses: google-github-actions/deploy-appengine@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          working_directory: apps/web
+
+  deploy-api:
+    name: Deploy API to Cloud Run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Auth GCP
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker --quiet
+
+      - name: Build and Push Container
+        run: |
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/quoteme-api:${{ github.sha }} -f apps/api/Dockerfile .
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/quoteme-api:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: quoteme-api
+          image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/quoteme-api:${{ github.sha }}
+          region: us-central1
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          flags: '--allow-unauthenticated'

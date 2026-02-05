@@ -1,19 +1,26 @@
-FROM node:20-slim AS builder
+FROM node:20-slim
+
 WORKDIR /app
-COPY package*.json ./
-COPY apps/api/package*.json ./apps/api/
-COPY packages/database/package*.json ./packages/database/
+
+# Copy monorepo root files for workspace support
+COPY package.json package-lock.json tsconfig.json ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/database ./packages/database/
+
+# Install dependencies (including workspace dependencies)
 RUN npm install
-COPY . .
-RUN npm run build -w packages/database
+
+# Generate Prisma client
+RUN npm run db:generate
+
+# Copy source
+COPY apps/api ./apps/api
+
+# Build
 RUN npm run build -w apps/api
 
-FROM node:20-slim
-WORKDIR /app
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/apps/api/package*.json ./apps/api/
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY --from=builder /app/packages/database ./packages/database
-RUN npm install --omit=dev
-EXPOSE 3001
+EXPOSE 8080
+
+ENV PORT 8080
+
 CMD ["npm", "start", "-w", "apps/api"]
