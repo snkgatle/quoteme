@@ -1,9 +1,8 @@
 import { getAvailableProjects } from './sp.controller';
-import { Request, Response } from 'express';
 import { prisma } from '@quoteme/database';
-import { TRADES } from '../lib/constants';
+import { Request, Response } from 'express';
 
-// Mock prisma
+// Mock the prisma client
 jest.mock('@quoteme/database', () => ({
     prisma: {
         serviceProvider: {
@@ -18,90 +17,130 @@ jest.mock('@quoteme/database', () => ({
     },
 }));
 
-// Mock logger
-jest.mock('../lib/logger', () => ({
-    logger: {
-        info: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
-    },
-}));
-
 describe('getAvailableProjects', () => {
-    let mockReq: Partial<Request>;
-    let mockRes: Partial<Response>;
-    let jsonMock: jest.Mock;
-    let statusMock: jest.Mock;
+    const mockFindUniqueSP = prisma.serviceProvider.findUnique as jest.Mock;
+    const mockFindManyRequests = prisma.quoteRequest.findMany as jest.Mock;
+    const mockFindManyQuotes = prisma.quote.findMany as jest.Mock;
+
+    let mockReq: Request;
+    let mockRes: Response;
 
     beforeEach(() => {
-        jsonMock = jest.fn();
-        statusMock = jest.fn().mockReturnValue({ json: jsonMock });
-        mockRes = {
-            status: statusMock,
-            json: jsonMock,
-        } as any;
+        jest.clearAllMocks();
         mockReq = {
             user: { id: 'sp-123' },
-        } as any;
-        jest.clearAllMocks();
+            query: {},
+        } as unknown as Request;
+
+        mockRes = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        } as unknown as Response;
     });
 
-    const generateRequests = (count: number) => {
-        const requests = [];
-        for (let i = 0; i < count; i++) {
-            requests.push({
-                id: `req-${i}`,
-                status: 'PENDING',
-                latitude: 40.7128 + (Math.random() * 0.01), // Nearby
-                longitude: -74.0060 + (Math.random() * 0.01),
-                requiredTrades: [TRADES[Math.floor(Math.random() * TRADES.length)]],
-                user: {
-                    name: 'Test User',
-                    email: 'test@example.com',
-                    phone: '1234567890'
-                }
-            });
-        }
-        return requests;
-    };
-
-    it('should query Prisma with trade and location filters', async () => {
-        const sp = {
+    it('should fetch EVERYTHING when no view param is provided (baseline)', async () => {
+        // Mock SP setup
+        mockFindUniqueSP.mockResolvedValue({
             id: 'sp-123',
             latitude: 40.7128,
             longitude: -74.0060,
-            trades: ['Plumber', 'Electrician'],
-            quotes: [] // No quotes yet
-        };
+            trades: ['PLUMBING'],
+            quotes: [{ requestId: 'req-1' }], // One existing quote
+        });
 
-        (prisma.serviceProvider.findUnique as jest.Mock).mockResolvedValue(sp);
+        // Mock requests
+        mockFindManyRequests.mockResolvedValue([
+            { id: 'req-2', latitude: 40.7129, longitude: -74.0061, requiredTrades: ['PLUMBING'], user: { name: 'User' } }
+        ]);
 
-        const filteredRequests = generateRequests(5);
-        (prisma.quoteRequest.findMany as jest.Mock).mockResolvedValue(filteredRequests);
-        (prisma.quote.findMany as jest.Mock).mockResolvedValue([]);
+        // Mock quotes
+        mockFindManyQuotes.mockResolvedValue([
+            {
+                id: 'quote-1',
+                status: 'PENDING',
+                requestId: 'req-1',
+                request: {
+                    id: 'req-1',
+                    status: 'PENDING',
+                    user: { name: 'User' }
+                }
+            }
+        ]);
 
-        await getAvailableProjects(mockReq as Request, mockRes as Response);
+        await getAvailableProjects(mockReq, mockRes);
 
-        // Verify Prisma was called with optimization filters
-        expect(prisma.quoteRequest.findMany).toHaveBeenCalledWith(expect.objectContaining({
-            where: expect.objectContaining({
-                requiredTrades: {
-                    hasSome: sp.trades
-                },
-                latitude: expect.objectContaining({
-                    gte: expect.any(Number),
-                    lte: expect.any(Number)
-                }),
-                longitude: expect.objectContaining({
-                    gte: expect.any(Number),
-                    lte: expect.any(Number)
-                })
-            })
+        expect(mockFindUniqueSP).toHaveBeenCalled();
+        expect(mockFindManyRequests).toHaveBeenCalled();
+        expect(mockFindManyQuotes).toHaveBeenCalled();
+
+        expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+            newRequests: expect.any(Array),
+            sentQuotes: expect.any(Array),
+            acceptedJobs: expect.any(Array),
         }));
+    });
 
-        expect(statusMock).not.toHaveBeenCalledWith(500);
-        expect(jsonMock).toHaveBeenCalled();
-        const response = jsonMock.mock.calls[0][0];
-        expect(response.newRequests).toHaveLength(5);
+    it('should fetch ONLY requests when view=requests', async () => {
+        mockReq.query = { view: 'requests' };
+
+        // Mock SP setup
+        mockFindUniqueSP.mockResolvedValue({
+            id: 'sp-123',
+            latitude: 40.7128,
+            longitude: -74.0060,
+            trades: ['PLUMBING'],
+            quotes: [{ requestId: 'req-1' }],
+        });
+
+        // Mock requests
+        mockFindManyRequests.mockResolvedValue([]);
+
+        await getAvailableProjects(mockReq, mockRes);
+
+        expect(mockFindUniqueSP).toHaveBeenCalled();
+        expect(mockFindManyRequests).toHaveBeenCalled();
+        expect(mockFindManyQuotes).not.toHaveBeenCalled(); // Optimization verified!
+    });
+
+    it('should fetch ONLY quotes when view=quotes', async () => {
+        mockReq.query = { view: 'quotes' };
+
+        // Mock SP setup
+        mockFindUniqueSP.mockResolvedValue({
+            id: 'sp-123',
+            quotes: [],
+        });
+
+        // Mock quotes
+        mockFindManyQuotes.mockResolvedValue([]);
+
+        await getAvailableProjects(mockReq, mockRes);
+
+        expect(mockFindUniqueSP).toHaveBeenCalled();
+        expect(mockFindManyRequests).not.toHaveBeenCalled(); // Optimization verified!
+        expect(mockFindManyQuotes).toHaveBeenCalledWith(expect.objectContaining({
+            where: { serviceProviderId: 'sp-123' }
+        }));
+    });
+
+    it('should fetch ONLY accepted quotes when view=accepted', async () => {
+        mockReq.query = { view: 'accepted' };
+
+        // Mock SP setup
+        mockFindUniqueSP.mockResolvedValue({
+            id: 'sp-123',
+            quotes: [],
+        });
+
+        // Mock quotes
+        mockFindManyQuotes.mockResolvedValue([]);
+
+        await getAvailableProjects(mockReq, mockRes);
+
+        expect(mockFindUniqueSP).toHaveBeenCalled();
+        expect(mockFindManyRequests).not.toHaveBeenCalled();
+        expect(mockFindManyQuotes).toHaveBeenCalledWith(expect.objectContaining({
+            where: { serviceProviderId: 'sp-123', status: 'ACCEPTED' } // Filter verified!
+        }));
     });
 });

@@ -75,27 +75,36 @@ const SPAdminDashboard: React.FC = () => {
     }, [activeTab, token]);
 
     useEffect(() => {
-        if (token) {
-            setLoading(true);
-            fetch('/api/sp/available-projects', {
-                headers: { Authorization: `Bearer ${token}` }
+        if (!token) return;
+
+        let view = '';
+        if (activeTab === 'requests') view = 'requests';
+        else if (activeTab === 'quotes') view = 'quotes';
+        else if (activeTab === 'accepted') view = 'accepted';
+        else return;
+
+        setLoading(true);
+        fetch(`/api/sp/available-projects?view=${view}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => {
+                if (res.status === 401) {
+                    logout();
+                    throw new Error('Unauthorized');
+                }
+                return res.json();
             })
-                .then(res => {
-                    if (res.status === 401) {
-                        logout();
-                        throw new Error('Unauthorized');
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    setNewRequests(data.newRequests || []);
+            .then(data => {
+                if (view === 'requests') setNewRequests(data.newRequests || []);
+                if (view === 'quotes') {
                     setSentQuotes(data.sentQuotes || []);
                     setAcceptedJobs(data.acceptedJobs || []);
-                })
-                .catch(err => console.error('Failed to fetch projects', err))
-                .finally(() => setLoading(false));
-        }
-    }, [token]);
+                }
+                if (view === 'accepted') setAcceptedJobs(data.acceptedJobs || []);
+            })
+            .catch(err => console.error('Failed to fetch projects', err))
+            .finally(() => setLoading(false));
+    }, [token, activeTab]);
 
     const handleOpenQuoteForm = (project: Project) => {
         setSelectedProject(project);
@@ -111,29 +120,7 @@ const SPAdminDashboard: React.FC = () => {
         handleCloseQuoteForm();
         setShowToast(true);
         setTimeout(() => setShowToast(false), 3000);
-
-        // Refetch projects
-        if (token) {
-            setLoading(true);
-            fetch('/api/sp/available-projects', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-                .then(res => {
-                    if (res.status === 401) {
-                        logout();
-                        throw new Error('Unauthorized');
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    setNewRequests(data.newRequests || []);
-                    setSentQuotes(data.sentQuotes || []);
-                    setAcceptedJobs(data.acceptedJobs || []);
-                    setActiveTab('quotes');
-                })
-                .catch(err => console.error('Failed to fetch projects', err))
-                .finally(() => setLoading(false));
-        }
+        setActiveTab('quotes');
     };
 
     const renderContent = () => {
