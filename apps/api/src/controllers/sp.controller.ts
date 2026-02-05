@@ -60,12 +60,12 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
 
         // Ensure location is valid
         if (typeof spLat !== 'number' || typeof spLon !== 'number') {
-             // If location is missing/invalid, return empty lists as we can't filter by distance
-             return res.json({
-                 newRequests: [],
-                 sentQuotes: [], // Should we return sent quotes? Probably yes, they are already sent.
-                 acceptedJobs: []
-             });
+            // If location is missing/invalid, return empty lists as we can't filter by distance
+            return res.json({
+                newRequests: [],
+                sentQuotes: [], // Should we return sent quotes? Probably yes, they are already sent.
+                acceptedJobs: []
+            });
         }
 
         const quotedRequestIds = spQuotes.map((q: { requestId: string }) => q.requestId);

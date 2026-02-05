@@ -7,11 +7,12 @@ import authRouter from './routes/auth.routes';
 import spRouter from './routes/sp.routes';
 import notificationRouter from './routes/notifications.routes';
 import quoteRouter from './routes/quote.routes';
+import { deconstructProject } from './lib/gemini';
 
 import path from 'path';
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
-const app = express();
+export const app = express();
 const port = process.env.PORT || 3300;
 
 app.use(cors());
@@ -30,11 +31,23 @@ app.get('/health', (req: Request, res: Response) => {
 
 // AI Deconstruction Endpoint Placeholder
 app.post('/api/deconstruct', async (req: Request, res: Response) => {
-    const { description } = req.body;
-    // Gemini logic will go here
-    res.json({ message: 'Request received', description });
+    try {
+        const { description } = req.body;
+
+        if (!description) {
+            return res.status(400).json({ error: 'Description is required' });
+        }
+
+        const deconstructed = await deconstructProject(description);
+        res.json({ deconstructed });
+    } catch (error) {
+        console.error('Error deconstructing project:', error);
+        res.status(500).json({ error: 'Failed to deconstruct project' });
+    }
 });
 
-app.listen(port, () => {
-    console.log(`API server running at http://localhost:${port}`);
-});
+if (require.main === module) {
+    app.listen(port, () => {
+        console.log(`API server running at http://localhost:${port}`);
+    });
+}
