@@ -75,4 +75,5 @@ jobs:
           image: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/quoteme/quoteme-api:${{ github.sha }}
           region: us-central1
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          flags: '--service-account=${{ secrets.GCP_SERVICE_ACCOUNT }} --allow-unauthenticated --memory 1024Mi'
+          flags: '--service-account=${{ secrets.GCP_SERVICE_ACCOUNT }} --allow-unauthenticated --memory 1024Mi \
+           --set-secrets=DATABASE_URL=DATABASE_URL:latest,GEMINI_API_KEY=GEMINI_API_KEY:latest,VITE_GOOGLE_MAPS_API_KEY=VITE_GOOGLE_MAPS_API_KEY:latest'

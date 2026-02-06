@@ -46,8 +46,8 @@ app.post('/api/deconstruct', async (req: Request, res: Response) => {
     }
 });
 
-if (require.main === module) {
-    app.listen(port, () => {
-        console.log(`API server running at http://localhost:${port}`);
-    });
-}
+app.listen(port, () => {
+    console.log(`API server starting up...`);
+    console.log(`Listening on port: ${port}`);
+    console.log(`URL: http://localhost:${port}`);
+});
