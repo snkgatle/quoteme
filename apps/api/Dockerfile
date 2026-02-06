@@ -13,10 +13,13 @@ RUN npm install
 # Generate Prisma client
 RUN npm run db:generate
 
+# Build database package
+RUN npm run build -w packages/database
+
 # Copy source
 COPY apps/api ./apps/api
 
-# Build
+# Build API
 RUN npm run build -w apps/api
 
 EXPOSE 8080
