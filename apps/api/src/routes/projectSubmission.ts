@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '@quoteme/database';
 import { extractTrades } from '../lib/gemini';
 import { notifyServiceProviders } from '../lib/notifications';
-import { calculateDistance } from '../lib/geo';
+import { calculateDistance, getBoundsOfDistance } from '../lib/geo';
 import { logger } from '../lib/logger';
 
 const router = Router();
@@ -43,13 +43,22 @@ router.post('/', async (req: Request, res: Response) => {
         });
 
         // 3. Find Nearby & Active Service Providers
-        // In a real high-scale app, we'd use PostGIS or a Geo-spatial index.
-        // For this implementation, we fetch active providers and filter with Haversine.
+        // Optimized: Use bounding box for initial DB filtering, then refined with Haversine.
+        const { minLat, maxLat, minLon, maxLon } = getBoundsOfDistance(latitude, longitude, 50);
+
         const allActiveSPs = await prisma.serviceProvider.findMany({
             where: {
                 status: 'ACTIVE',
                 trades: {
                     hasSome: requiredTrades,
+                },
+                latitude: {
+                    gte: minLat,
+                    lte: maxLat,
+                },
+                longitude: {
+                    gte: minLon,
+                    lte: maxLon,
                 },
             },
         });
