@@ -51,12 +51,11 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
     try {
         const sp = await prisma.serviceProvider.findUnique({
             where: { id: user.id },
-            include: { quotes: true }
         });
 
         if (!sp) return res.status(404).json({ error: 'Service Provider not found' });
 
-        const { latitude: spLat, longitude: spLon, trades: spTrades, quotes: spQuotes } = sp;
+        const { latitude: spLat, longitude: spLon, trades: spTrades } = sp;
 
         // Ensure location is valid
         if (typeof spLat !== 'number' || typeof spLon !== 'number') {
@@ -67,8 +66,6 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
                 acceptedJobs: []
             });
         }
-
-        const quotedRequestIds = spQuotes.map((q: { requestId: string }) => q.requestId);
 
         // Calculate bounding box for 50km radius
         const latDelta = 50 / 111;
@@ -83,8 +80,10 @@ export const getAvailableProjects = async (req: Request, res: Response) => {
         const pendingProjects = await prisma.quoteRequest.findMany({
             where: {
                 status: 'PENDING',
-                NOT: {
-                    id: { in: quotedRequestIds }
+                quotes: {
+                    none: {
+                        serviceProviderId: user.id
+                    }
                 },
                 requiredTrades: {
                     hasSome: spTrades
