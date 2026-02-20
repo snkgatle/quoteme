@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma, QuoteRequest, Quote } from '@quoteme/database';
 import { AuthRequest } from '../middleware/auth.middleware';
-import { calculateDistance } from '../lib/geo';
+import { calculateDistance, getBoundsOfDistance } from '../lib/geo';
 
 export const getNotifications = async (req: Request, res: Response) => {
     const user = (req as AuthRequest).user;
@@ -21,47 +21,63 @@ export const getNotifications = async (req: Request, res: Response) => {
         const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
         const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-        const closingSoonProjects = await prisma.quoteRequest.findMany({
-            where: {
-                status: 'PENDING',
-                createdAt: {
-                    gte: fortyEightHoursAgo,
-                    lt: twentyFourHoursAgo
+        if (sp.latitude && sp.longitude) {
+            // Performance Optimization: Move filtering to DB
+            const { minLat, maxLat, minLon, maxLon } = getBoundsOfDistance(sp.latitude, sp.longitude, 50);
+
+            const closingSoonProjects = await prisma.quoteRequest.findMany({
+                where: {
+                    status: 'PENDING',
+                    createdAt: {
+                        gte: fortyEightHoursAgo,
+                        lt: twentyFourHoursAgo
+                    },
+                    // 1. Filter by trades (overlap)
+                    requiredTrades: {
+                        hasSome: sp.trades
+                    },
+                    // 2. Filter by location (bounding box)
+                    latitude: {
+                        gte: minLat,
+                        lte: maxLat
+                    },
+                    longitude: {
+                        gte: minLon,
+                        lte: maxLon
+                    },
+                    // 3. Filter by not quoted yet
+                    quotes: {
+                        none: {
+                            serviceProviderId: sp.id
+                        }
+                    }
                 }
-            }
-        });
-
-        // Filter for matching projects
-        const matchedProjects = closingSoonProjects.filter((project: any) => {
-            // Check trades
-            const hasMatchingTrade = project.requiredTrades.some((trade: any) => sp.trades.includes(trade));
-            if (!hasMatchingTrade) return false;
-
-            // Check distance
-            if (!sp.latitude || !sp.longitude || !project.latitude || !project.longitude) return false;
-            const dist = calculateDistance(sp.latitude, sp.longitude, project.latitude, project.longitude);
-            if (dist > 50) return false;
-
-            // Check if already quoted
-            const hasQuoted = sp.quotes.some((q: any) => q.requestId === project.id);
-            if (hasQuoted) return false;
-
-            return true;
-        });
-
-        // Create notifications if they don't exist
-        const notificationsData = matchedProjects.map((project: QuoteRequest) => ({
-            serviceProviderId: sp.id,
-            type: 'CLOSING_SOON',
-            message: `Project matching ${project.requiredTrades.join(', ')} is closing soon!`,
-            projectId: project.id
-        }));
-
-        if (notificationsData.length > 0) {
-            await prisma.notification.createMany({
-                data: notificationsData,
-                skipDuplicates: true
             });
+
+            // Filter for matching projects (precise distance check only)
+            const matchedProjects = closingSoonProjects.filter((project: any) => {
+                // Check distance (precise)
+                if (!sp.latitude || !sp.longitude || !project.latitude || !project.longitude) return false;
+                const dist = calculateDistance(sp.latitude, sp.longitude, project.latitude, project.longitude);
+                if (dist > 50) return false;
+
+                return true;
+            });
+
+            // Create notifications if they don't exist
+            const notificationsData = matchedProjects.map((project: QuoteRequest) => ({
+                serviceProviderId: sp.id,
+                type: 'CLOSING_SOON',
+                message: `Project matching ${project.requiredTrades.join(', ')} is closing soon!`,
+                projectId: project.id
+            }));
+
+            if (notificationsData.length > 0) {
+                await prisma.notification.createMany({
+                    data: notificationsData,
+                    skipDuplicates: true
+                });
+            }
         }
 
         // Fetch all notifications

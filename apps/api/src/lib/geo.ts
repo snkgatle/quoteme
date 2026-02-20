@@ -10,6 +10,18 @@ export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2
     return R * c;
 }
 
+export function getBoundsOfDistance(lat: number, lon: number, distance: number) {
+    const latChange = distance / 111.32;
+    const lonChange = Math.abs(distance / (111.32 * Math.cos(deg2rad(lat))));
+
+    return {
+        minLat: lat - latChange,
+        maxLat: lat + latChange,
+        minLon: lon - lonChange,
+        maxLon: lon + lonChange
+    };
+}
+
 function deg2rad(deg: number): number {
     return deg * (Math.PI / 180);
 }
