@@ -91,8 +91,7 @@ router.post('/:id/select-quote', async (req: Request, res: Response) => {
 
         // Get the quote to find its trade
         const quoteToSelect = await prisma.quote.findUnique({
-            where: { id: quoteId },
-            include: { request: true }
+            where: { id: quoteId }
         });
 
         if (!quoteToSelect) return res.status(404).json({ error: 'Quote not found' });
