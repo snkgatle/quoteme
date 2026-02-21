@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '@quoteme/database';
 import { extractTrades } from '../lib/gemini';
 import { notifyServiceProviders } from '../lib/notifications';
+import { sendEmailNotification } from '../lib/notificationService';
 import { calculateDistance } from '../lib/geo';
 import { logger } from '../lib/logger';
 
@@ -66,6 +67,14 @@ router.post('/', async (req: Request, res: Response) => {
         // 4. Trigger asynchronous notifications
         const spIds = nearbySPs.map((sp: any) => sp.id);
         notifyServiceProviders(spIds, project.id);
+
+        // Send email notification to admin
+        const adminEmail = process.env.ADMIN_EMAIL || 'admin@quoteme.com';
+        await sendEmailNotification({
+            to: adminEmail,
+            subject: `New Project Submission: ${project.id}`,
+            body: `A new project has been submitted.\n\nProject ID: ${project.id}\nUser: ${userName} (${userEmail})\nDescription: ${description}\nRequired Trades: ${requiredTrades.join(', ')}`
+        });
 
         logger.info('Project submitted successfully', {
             projectId: project.id,
